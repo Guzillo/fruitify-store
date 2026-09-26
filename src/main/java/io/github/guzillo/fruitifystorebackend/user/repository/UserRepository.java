@@ -1,0 +1,10 @@
+package io.github.guzillo.fruitifystorebackend.user.repository;
+
+import io.github.guzillo.fruitifystorebackend.user.model.User;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByEmail(String email);
+}
