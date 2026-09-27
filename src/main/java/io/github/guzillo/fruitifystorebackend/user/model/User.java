@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.user.model;
 
+import io.github.guzillo.fruitifystorebackend.common.model.AuditableBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,7 +16,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
-public class User {
+public class User extends AuditableBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
