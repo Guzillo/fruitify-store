@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.security.model;
 
+import io.github.guzillo.fruitifystorebackend.common.model.AuditableBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,7 +21,7 @@ import org.hibernate.proxy.HibernateProxy;
 @Entity
 @Table(name = "privileges")
 @NoArgsConstructor
-public class Privilege {
+public class Privilege extends AuditableBaseEntity {
 
     public Privilege(String name) {
         this.name = name;

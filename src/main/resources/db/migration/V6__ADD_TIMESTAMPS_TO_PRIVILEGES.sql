@@ -1,0 +1,5 @@
+ALTER TABLE privileges
+    ADD created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+
+ALTER TABLE privileges
+    ADD modified_at TIMESTAMP(6) WITHOUT TIME ZONE;

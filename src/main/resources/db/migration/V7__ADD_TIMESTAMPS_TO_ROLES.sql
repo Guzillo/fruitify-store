@@ -1,0 +1,5 @@
+ALTER TABLE roles
+    ADD created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+
+ALTER TABLE roles
+    ADD modified_at TIMESTAMP(6) WITHOUT TIME ZONE;

@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.security.model;
 
+import io.github.guzillo.fruitifystorebackend.common.model.AuditableBaseEntity;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +24,7 @@ import org.hibernate.proxy.HibernateProxy;
 @Entity
 @Table(name = "roles")
 @NoArgsConstructor
-public class Role {
+public class Role extends AuditableBaseEntity {
 
 
     public Role(String name) {
