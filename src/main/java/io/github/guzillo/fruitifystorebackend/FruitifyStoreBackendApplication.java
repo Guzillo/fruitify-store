@@ -1,8 +1,10 @@
 package io.github.guzillo.fruitifystorebackend;
 
 import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
+import io.github.guzillo.fruitifystorebackend.security.repository.RoleRepository;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
+import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,13 +24,13 @@ public class FruitifyStoreBackendApplication {
     @Profile("dev")
     @Bean
     CommandLineRunner commandLineRunner(UserRepository userRepository,
-        PasswordEncoder passwordEncoder) {
+        PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         return args -> {
             if (userRepository.count() == 0) {
                 userRepository.save(
-                    new User("user@email.com", passwordEncoder.encode("pass1"), "ROLE_USER"));
+                    new User("user@email.com", passwordEncoder.encode("pass1"), Set.of(roleRepository.findByName("ROLE_USER"))));
                 userRepository.save(
-                    new User("admin@email.com", passwordEncoder.encode("pass2"), "ROLE_ADMIN"));
+                    new User("admin@email.com", passwordEncoder.encode("pass2"), Set.of(roleRepository.findByName("ROLE_ADMIN"))));
             }
         };
     }

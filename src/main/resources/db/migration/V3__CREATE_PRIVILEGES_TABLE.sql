@@ -1,0 +1,8 @@
+CREATE SEQUENCE IF NOT EXISTS privileges_seq START WITH 1 INCREMENT BY 50;
+
+CREATE TABLE privileges
+(
+    id   BIGINT       NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_privileges PRIMARY KEY (id)
+);
