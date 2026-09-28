@@ -61,18 +61,6 @@ public class SecurityConfig {
             .build();
     }
 
-
-    @Profile("dev")
-    @Bean
-    public InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-        return new InMemoryUserDetailsManager(
-            User.withUsername("test")
-                .password("{noop}test")
-                .authorities("read")
-                .build()
-        );
-    }
-
     @Bean
     JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.publicKey()).build();
