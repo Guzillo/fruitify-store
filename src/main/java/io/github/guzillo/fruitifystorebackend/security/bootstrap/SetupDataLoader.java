@@ -1,4 +1,4 @@
-package io.github.guzillo.fruitifystorebackend.security.config;
+package io.github.guzillo.fruitifystorebackend.security.bootstrap;
 
 import io.github.guzillo.fruitifystorebackend.security.model.Privilege;
 import io.github.guzillo.fruitifystorebackend.security.model.Role;

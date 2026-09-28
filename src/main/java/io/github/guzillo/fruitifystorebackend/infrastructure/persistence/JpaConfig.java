@@ -1,4 +1,4 @@
-package io.github.guzillo.fruitifystorebackend.common.config;
+package io.github.guzillo.fruitifystorebackend.infrastructure.persistence;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
