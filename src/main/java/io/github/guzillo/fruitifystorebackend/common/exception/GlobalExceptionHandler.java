@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.common.exception;
 
 import io.github.guzillo.fruitifystorebackend.auth.exception.EmailAlreadyRegisteredException;
 import io.github.guzillo.fruitifystorebackend.auth.exception.InvalidTokenException;
+import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,4 +32,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AuthenticatedUserNotFoundException.class)
+    public ResponseEntity<Object> handleAuthenticatedUserNotFoundException(
+        AuthenticatedUserNotFoundException ex, WebRequest request
+    ) {
+        return super.handleExceptionInternal(
+            ex,
+            "Authentication is no longer valid",
+            new HttpHeaders(),
+            HttpStatus.UNAUTHORIZED,
+            request
+        );
+    }
 }
