@@ -19,16 +19,18 @@ public class SignupService {
     private final RoleRepository roleRepository;
 
     public void signup(SignupUserDto signupUserDto) {
-        Optional<User> foundUser = userRepository.findByEmail(signupUserDto.getEmail());
+        Optional<User> foundUser = userRepository.findByEmail(signupUserDto.email());
         if (foundUser.isPresent()) {
-            throw new EmailAlreadyRegisteredException(signupUserDto.getEmail());
+            throw new EmailAlreadyRegisteredException(signupUserDto.email());
         }
 
         User user = new User(
-            signupUserDto.getEmail().toLowerCase(),
-            passwordEncoder.encode(signupUserDto.getPassword()),
+            signupUserDto.email().toLowerCase(),
+            passwordEncoder.encode(signupUserDto.password()),
             Set.of(roleRepository.findByName("ROLE_USER"))
         );
+        user.setFirstName(signupUserDto.firstName());
+        user.setLastName(signupUserDto.lastName());
 
         userRepository.save(user);
     }

@@ -1,9 +1,8 @@
-package io.github.guzillo.fruitifystorebackend.user;
+package io.github.guzillo.fruitifystorebackend.user.service;
 
 import io.github.guzillo.fruitifystorebackend.user.dto.UserDto;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

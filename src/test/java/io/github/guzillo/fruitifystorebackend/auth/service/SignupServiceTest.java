@@ -41,12 +41,14 @@ public class SignupServiceTest {
     void shouldSignupUserWhenEmailIsNotRegistered() {
         SignupUserDto signupUserDto = new SignupUserDto(
             "JOHN@EXAMPLE.COM",
-            "plain-password"
+            "plain-password",
+            "John",
+            "Doe"
         );
         Role userRole = new Role("ROLE_USER");
 
-        when(userRepository.findByEmail(signupUserDto.getEmail())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(signupUserDto.getPassword())).thenReturn("encoded-password");
+        when(userRepository.findByEmail(signupUserDto.email())).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(signupUserDto.password())).thenReturn("encoded-password");
         when(roleRepository.findByName("ROLE_USER")).thenReturn(userRole);
 
         signupService.signup(signupUserDto);
@@ -58,6 +60,8 @@ public class SignupServiceTest {
         assertThat(savedUser.getEmail()).isEqualTo("john@example.com");
         assertThat(savedUser.getPassword()).isEqualTo("encoded-password");
         assertThat(savedUser.getRoles()).containsExactly(userRole);
+        assertThat(savedUser.getFirstName()).isEqualTo("John");
+        assertThat(savedUser.getLastName()).isEqualTo("Doe");
         verify(passwordEncoder).encode("plain-password");
         verify(roleRepository).findByName("ROLE_USER");
     }
@@ -70,7 +74,7 @@ public class SignupServiceTest {
         );
         User existingUser = new User();
 
-        when(userRepository.findByEmail(signupUserDto.getEmail()))
+        when(userRepository.findByEmail(signupUserDto.email()))
             .thenReturn(Optional.of(existingUser));
 
         assertThatThrownBy(() -> signupService.signup(signupUserDto))
