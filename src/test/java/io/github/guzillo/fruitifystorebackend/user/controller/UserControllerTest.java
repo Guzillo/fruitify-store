@@ -3,12 +3,14 @@ package io.github.guzillo.fruitifystorebackend.user.controller;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.github.guzillo.fruitifystorebackend.user.dto.UpdateUserReqDTO;
 import io.github.guzillo.fruitifystorebackend.user.service.UserService;
-import io.github.guzillo.fruitifystorebackend.user.dto.UserDto;
+import io.github.guzillo.fruitifystorebackend.user.dto.UserResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +48,7 @@ class UserControllerTest {
     void shouldReceiveUserDataForAuthenticatedUser() throws Exception {
         when(authentication.getName()).thenReturn("user@email.com");
         when(userService.findUserByEmailAndReturnDto("user@email.com"))
-            .thenReturn(new UserDto("user@email.com", "John", "Doe"));
+            .thenReturn(new UserResponseDTO("user@email.com", "John", "Doe"));
 
         mockMvc.perform(get("/api/users/me")
                 .principal(authentication))
@@ -60,5 +62,39 @@ class UserControllerTest {
 
         verify(userService).findUserByEmailAndReturnDto("user@email.com");
 
+    }
+
+    @Test
+    void shouldUpdateAuthenticatedUser() throws Exception {
+        UpdateUserReqDTO request = new UpdateUserReqDTO(
+            "updated@example.com",
+            "Doe",
+            "Jane"
+        );
+        UserResponseDTO response = new UserResponseDTO(
+            "updated@example.com",
+            "Jane",
+            "Doe"
+        );
+
+        when(userService.updateUser(authentication, request)).thenReturn(response);
+
+        mockMvc.perform(put("/api/users/me")
+                .principal(authentication)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "updated@example.com",
+                      "lastName": "Doe",
+                      "firstName": "Jane"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.email").value("updated@example.com"))
+            .andExpect(jsonPath("$.firstName").value("Jane"))
+            .andExpect(jsonPath("$.lastName").value("Doe"));
+
+        verify(userService).updateUser(authentication, request);
     }
 }

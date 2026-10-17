@@ -5,6 +5,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link io.github.guzillo.fruitifystorebackend.user.model.User}
  */
-public record UserDto(String email, String firstName, String lastName) implements Serializable {
+public record UserResponseDTO(String email, String firstName, String lastName) implements Serializable {
 
 }
