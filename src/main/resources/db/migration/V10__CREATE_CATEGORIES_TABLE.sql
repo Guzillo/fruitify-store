@@ -1,0 +1,10 @@
+CREATE TABLE categories
+(
+    id   BIGINT       NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_categories PRIMARY KEY (id)
+);
+
+ALTER TABLE categories
+    ADD CONSTRAINT uc_categories_name UNIQUE (name);
