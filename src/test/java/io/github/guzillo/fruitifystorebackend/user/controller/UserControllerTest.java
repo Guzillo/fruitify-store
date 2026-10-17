@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.guzillo.fruitifystorebackend.user.dto.UpdateUserReqDTO;
+import io.github.guzillo.fruitifystorebackend.user.dto.UpdatePasswordReqDTO;
 import io.github.guzillo.fruitifystorebackend.user.service.UserService;
 import io.github.guzillo.fruitifystorebackend.user.dto.UserResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,5 +97,27 @@ class UserControllerTest {
             .andExpect(jsonPath("$.lastName").value("Doe"));
 
         verify(userService).updateUser(authentication, request);
+    }
+
+    @Test
+    void shouldUpdateAuthenticatedUserPassword() throws Exception {
+        UpdatePasswordReqDTO request = new UpdatePasswordReqDTO(
+            "old-password",
+            "new-password"
+        );
+
+        mockMvc.perform(put("/api/users/me/password")
+                .principal(authentication)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "currentPassword": "old-password",
+                      "newPassword": "new-password"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(content().string(""));
+
+        verify(userService).updatePassword(authentication, request);
     }
 }

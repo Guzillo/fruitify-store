@@ -1,6 +1,7 @@
 package io.github.guzillo.fruitifystorebackend.user.controller;
 
 import io.github.guzillo.fruitifystorebackend.user.dto.UpdateUserReqDTO;
+import io.github.guzillo.fruitifystorebackend.user.dto.UpdatePasswordReqDTO;
 import io.github.guzillo.fruitifystorebackend.user.service.UserService;
 import io.github.guzillo.fruitifystorebackend.user.dto.UserResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +30,11 @@ public class UserController {
     public UserResponseDTO updateMe(@RequestBody UpdateUserReqDTO updateUserReqDTO,
         Authentication authentication) {
         return userService.updateUser(authentication, updateUserReqDTO);
+    }
+
+    @PutMapping("/me/password")
+    public void updatePassword(@RequestBody UpdatePasswordReqDTO updatePasswordReqDTO,
+        Authentication authentication) {
+        userService.updatePassword(authentication, updatePasswordReqDTO);
     }
 }

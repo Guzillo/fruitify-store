@@ -1,13 +1,16 @@
 package io.github.guzillo.fruitifystorebackend.user.service;
 
 import io.github.guzillo.fruitifystorebackend.user.dto.UpdateUserReqDTO;
+import io.github.guzillo.fruitifystorebackend.user.dto.UpdatePasswordReqDTO;
 import io.github.guzillo.fruitifystorebackend.user.dto.UserResponseDTO;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
+import io.github.guzillo.fruitifystorebackend.user.exception.InvalidPasswordException;
 import io.github.guzillo.fruitifystorebackend.user.mapper.UserMapper;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponseDTO findUserByEmailAndReturnDto(String email) {
         User user = findUserByEmail(email);
@@ -40,6 +44,18 @@ public class UserService {
 
         User updated = userRepository.save(user);
         return userMapper.toUserResponseDTO(updated);
+    }
+
+    public void updatePassword(Authentication authentication,
+        UpdatePasswordReqDTO updatePasswordReqDTO) {
+        User user = findUserByEmail(authentication.getName());
+
+        if (!passwordEncoder.matches(updatePasswordReqDTO.currentPassword(), user.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        user.setPassword(passwordEncoder.encode(updatePasswordReqDTO.newPassword()));
+        userRepository.save(user);
     }
 
     private User findUserByEmail(String email) {

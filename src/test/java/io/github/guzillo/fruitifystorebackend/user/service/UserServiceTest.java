@@ -1,10 +1,13 @@
 package io.github.guzillo.fruitifystorebackend.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.github.guzillo.fruitifystorebackend.user.dto.UpdateUserReqDTO;
+import io.github.guzillo.fruitifystorebackend.user.dto.UpdatePasswordReqDTO;
+import io.github.guzillo.fruitifystorebackend.user.exception.InvalidPasswordException;
 import io.github.guzillo.fruitifystorebackend.user.dto.UserResponseDTO;
 import io.github.guzillo.fruitifystorebackend.user.mapper.UserMapper;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
@@ -15,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -27,6 +31,9 @@ public class UserServiceTest {
 
     @Mock
     private Authentication authentication;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -62,5 +69,52 @@ public class UserServiceTest {
         assertThat(user.getLastName()).isEqualTo("New Name");
         verify(userRepository).save(user);
         verify(userMapper).toUserResponseDTO(user);
+    }
+
+    @Test
+    void shouldUpdatePasswordForAuthenticatedUser() {
+        User user = new User();
+        user.setEmail("user@example.com");
+        user.setPassword("encoded-old-password");
+        UpdatePasswordReqDTO request = new UpdatePasswordReqDTO(
+            "old-password",
+            "new-password"
+        );
+
+        when(authentication.getName()).thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com"))
+            .thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches("old-password", "encoded-old-password"))
+            .thenReturn(true);
+        when(passwordEncoder.encode("new-password")).thenReturn("encoded-new-password");
+
+        userService.updatePassword(authentication, request);
+
+        assertThat(user.getPassword()).isEqualTo("encoded-new-password");
+        verify(userRepository).save(user);
+        verify(passwordEncoder).encode("new-password");
+    }
+
+    @Test
+    void shouldRejectPasswordUpdateWhenCurrentPasswordIsIncorrect() {
+        User user = new User();
+        user.setPassword("encoded-old-password");
+        UpdatePasswordReqDTO request = new UpdatePasswordReqDTO(
+            "wrong-password",
+            "new-password"
+        );
+
+        when(authentication.getName()).thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com"))
+            .thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "encoded-old-password"))
+            .thenReturn(false);
+
+        assertThatThrownBy(() -> userService.updatePassword(authentication, request))
+            .isInstanceOf(InvalidPasswordException.class)
+            .hasMessage("Current password is incorrect");
+
+        verify(userRepository, org.mockito.Mockito.never()).save(user);
+        verify(passwordEncoder, org.mockito.Mockito.never()).encode("new-password");
     }
 }
