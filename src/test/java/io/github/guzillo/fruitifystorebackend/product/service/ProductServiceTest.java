@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
-import io.github.guzillo.fruitifystorebackend.product.dto.CategoryResponseDTO;
+import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;

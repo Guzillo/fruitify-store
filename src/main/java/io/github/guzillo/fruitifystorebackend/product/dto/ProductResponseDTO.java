@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.product.dto;
 
+import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import java.math.BigDecimal;
 
 public record ProductResponseDTO(

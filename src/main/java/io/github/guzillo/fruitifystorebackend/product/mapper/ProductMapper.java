@@ -1,6 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.product.mapper;
 
-import io.github.guzillo.fruitifystorebackend.product.dto.CategoryResponseDTO;
+import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import org.springframework.stereotype.Component;

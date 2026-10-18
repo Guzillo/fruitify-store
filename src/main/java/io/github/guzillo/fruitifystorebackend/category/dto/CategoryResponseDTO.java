@@ -1,4 +1,4 @@
-package io.github.guzillo.fruitifystorebackend.product.dto;
+package io.github.guzillo.fruitifystorebackend.category.dto;
 
 public record CategoryResponseDTO(Long id, String name, String slug) {
 
