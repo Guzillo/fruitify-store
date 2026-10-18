@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.product.service;
 
+import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
@@ -20,5 +21,12 @@ public class ProductService {
     public Page<ProductResponseDTO> findProducts(Pageable pageable) {
         return productRepository.findAll(pageable)
             .map(productMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponseDTO findProduct(Long id) {
+        return productRepository.findWithCategoryById(id)
+            .map(productMapper::toResponse)
+            .orElseThrow(() -> new ResourceNotFoundException("Product", id));
     }
 }

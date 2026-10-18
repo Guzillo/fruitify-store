@@ -90,4 +90,33 @@ class ProductControllerTest {
                 && pageable.getPageSize() == 20 && pageable.getSort().isUnsorted()));
     }
 
+    @Test
+    void shouldReturnProductById() throws Exception {
+        ProductResponseDTO product = new ProductResponseDTO(
+            1L,
+            "Orange",
+            "Juicy orange",
+            new BigDecimal("2.49"),
+            25,
+            true,
+            "https://example.test/orange.png",
+            new CategoryResponseDTO(1L, "Fruits", "fruits"));
+        when(productService.findProduct(1L)).thenReturn(product);
+
+        mockMvc.perform(get("/api/products/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.name").value("Orange"))
+            .andExpect(jsonPath("$.description").value("Juicy orange"))
+            .andExpect(jsonPath("$.price").value(2.49))
+            .andExpect(jsonPath("$.stockQuantity").value(25))
+            .andExpect(jsonPath("$.isActive").value(true))
+            .andExpect(jsonPath("$.imageUrl").value("https://example.test/orange.png"))
+            .andExpect(jsonPath("$.category.id").value(1))
+            .andExpect(jsonPath("$.category.name").value("Fruits"))
+            .andExpect(jsonPath("$.category.slug").value("fruits"));
+
+        verify(productService).findProduct(1L);
+    }
+
 }

@@ -45,4 +45,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             request
         );
     }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFoundException(
+        ResourceNotFoundException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+    }
 }
