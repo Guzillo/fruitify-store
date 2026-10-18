@@ -3,6 +3,7 @@ package io.github.guzillo.fruitifystorebackend.product.controller;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
+import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,5 +48,12 @@ public class ProductController {
     @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.CREATED)
     public ProductResponseDTO createProduct(@Valid @RequestBody ProductCreateRequestDTO request) {
         return productService.createProduct(request);
+    }
+
+    @PutMapping("/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductResponseDTO updateProduct(@PathVariable Long productId,
+        @Valid @RequestBody ProductUpdateRequestDTO request) {
+        return productService.updateProduct(productId, request);
     }
 }

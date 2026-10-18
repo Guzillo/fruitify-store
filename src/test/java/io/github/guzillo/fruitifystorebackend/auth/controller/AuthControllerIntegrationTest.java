@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -223,6 +224,17 @@ class AuthControllerIntegrationTest {
                     }
                     """))
             .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shouldRejectProductUpdateForUserRole() throws Exception {
+        mockMvc.perform(put("/api/products/1")
+                .with(jwt().authorities(() -> "ROLE_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"price": 3.49}
+                    """))
+            .andExpect(status().isForbidden());
     }
 
     @RestController

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,6 +13,7 @@ import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHa
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -174,6 +176,35 @@ class ProductControllerTest {
                     """))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$").value("Product already exists: Apple"));
+    }
+
+    @Test
+    void shouldUpdateProduct() throws Exception {
+        ProductResponseDTO response = new ProductResponseDTO(
+            1L, "Apple", "Updated apple", new BigDecimal("3.49"), 50, true,
+            null, new CategoryResponseDTO(1L, "Fruits", "fruits"));
+        when(productService.updateProduct(
+            org.mockito.ArgumentMatchers.eq(1L),
+            org.mockito.ArgumentMatchers.any(ProductUpdateRequestDTO.class)))
+            .thenReturn(response);
+
+        mockMvc.perform(put("/api/products/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Updated Apple",
+                      "price": 3.49,
+                      "description": "Updated apple",
+                      "stockQuantity": 50,
+                      "isActive": false,
+                      "categoryId": 2,
+                      "imageUrl": "https://example.test/updated-apple.png"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.price").value(3.49))
+            .andExpect(jsonPath("$.description").value("Updated apple"))
+            .andExpect(jsonPath("$.stockQuantity").value(50));
     }
 
 }

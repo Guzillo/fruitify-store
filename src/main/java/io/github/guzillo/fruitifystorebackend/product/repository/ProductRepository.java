@@ -12,6 +12,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByName(String name);
 
+    boolean existsByNameAndIdNot(String name, Long id);
+
     @EntityGraph(attributePaths = "category")
     Optional<Product> findWithCategoryById(Long id);
 

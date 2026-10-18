@@ -13,6 +13,7 @@ import io.github.guzillo.fruitifystorebackend.category.CategoryRepository;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
+import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
@@ -126,6 +127,88 @@ class ProductServiceTest {
 
         verify(categoryRepository, never()).findById(1L);
         verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUpdateProvidedProductFields() {
+        ProductUpdateRequestDTO request = new ProductUpdateRequestDTO(
+            "Updated Apple", new BigDecimal("3.49"), "Updated description", 50, false, 2L,
+            "https://example.test/updated-apple.png");
+        Product product = new Product();
+        product.setPrice(new BigDecimal("2.49"));
+        product.setDescription("Old description");
+        product.setStockQuantity(10);
+        product.setIsActive(true);
+        Category category = new Category();
+        Category updatedCategory = new Category();
+        product.setCategory(category);
+        ProductResponseDTO response = productResponse(1L, "Apple");
+
+        when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.of(product));
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(updatedCategory));
+        when(productRepository.save(product)).thenReturn(product);
+        when(productMapper.toResponse(product)).thenReturn(response);
+
+        assertThat(productService.updateProduct(1L, request)).isEqualTo(response);
+
+        assertThat(product.getPrice()).isEqualByComparingTo("3.49");
+        assertThat(product.getDescription()).isEqualTo("Updated description");
+        assertThat(product.getStockQuantity()).isEqualTo(50);
+        assertThat(product.getIsActive()).isFalse();
+        assertThat(product.getCategory()).isSameAs(updatedCategory);
+        assertThat(product.getImageUrl())
+            .isEqualTo("https://example.test/updated-apple.png");
+        verify(categoryRepository).findById(2L);
+        verify(productRepository).save(product);
+        verify(productMapper).toResponse(product);
+    }
+
+    @Test
+    void shouldUpdateOnlyProvidedFields() {
+        ProductUpdateRequestDTO request = new ProductUpdateRequestDTO(
+            null, null, null, 50, null, null, null);
+        Product product = new Product();
+        product.setPrice(new BigDecimal("2.49"));
+        product.setDescription("Description");
+        product.setStockQuantity(10);
+
+        when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+        when(productMapper.toResponse(product)).thenReturn(productResponse(1L, "Apple"));
+
+        productService.updateProduct(1L, request);
+
+        assertThat(product.getPrice()).isEqualByComparingTo("2.49");
+        assertThat(product.getDescription()).isEqualTo("Description");
+        assertThat(product.getStockQuantity()).isEqualTo(50);
+    }
+
+    @Test
+    void shouldRejectDuplicateNameWhenUpdatingProduct() {
+        ProductUpdateRequestDTO request = new ProductUpdateRequestDTO(
+            "Orange", null, null, null, null, null, null);
+        Product product = new Product();
+        product.setName("Apple");
+
+        when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameAndIdNot("Orange", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.updateProduct(1L, request))
+            .isInstanceOf(ProductAlreadyExistsException.class)
+            .hasMessage("Product already exists: Orange");
+
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingMissingProduct() {
+        when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.updateProduct(
+            1L, new ProductUpdateRequestDTO(
+                null, new BigDecimal("3.49"), null, null, null, null, null)))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessage("Product was not found: 1");
     }
 
     private ProductResponseDTO productResponse(Long id, String name) {
