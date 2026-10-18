@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -39,11 +40,12 @@ class ProductControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(productController)
             .setMessageConverters(new JacksonJsonHttpMessageConverter())
+            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
     }
 
     @Test
-    void shouldReturnProductsWithPagination() throws Exception {
+    void shouldReturnProductsWithPaginationAndSorting() throws Exception {
         ProductResponseDTO product = new ProductResponseDTO(
             1L,
             "Buty sportowe",
@@ -58,10 +60,9 @@ class ProductControllerTest {
             .thenReturn(response);
 
         mockMvc.perform(get("/api/products")
-                .queryParam("page", "1")
+                .queryParam("page", "0")
                 .queryParam("size", "10")
-                .queryParam("sortBy", "price")
-                .queryParam("direction", "desc"))
+                .queryParam("sort", "price,desc"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].name").value("Buty sportowe"))
             .andExpect(jsonPath("$.content[0].category.id").value(1))
@@ -76,7 +77,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void shouldReturnUnpagedProductsWithoutOptionalParameters() throws Exception {
+    void shouldUseSpringDefaultsWithoutOptionalParameters() throws Exception {
         when(productService.findProducts(org.mockito.ArgumentMatchers.any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of()));
 
@@ -85,18 +86,8 @@ class ProductControllerTest {
             .andExpect(jsonPath("$.content").isEmpty());
 
         verify(productService).findProducts(org.mockito.ArgumentMatchers.argThat(
-            pageable -> pageable.isUnpaged() && pageable.getSort().isUnsorted()));
+            pageable -> pageable.isPaged() && pageable.getPageNumber() == 0
+                && pageable.getPageSize() == 20 && pageable.getSort().isUnsorted()));
     }
 
-    @Test
-    void shouldRejectInvalidPageSize() throws Exception {
-        mockMvc.perform(get("/api/products").queryParam("size", "101"))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldRejectUnsupportedSortField() throws Exception {
-        mockMvc.perform(get("/api/products").queryParam("sortBy", "stockQuantity"))
-            .andExpect(status().isBadRequest());
-    }
 }
