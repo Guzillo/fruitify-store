@@ -34,22 +34,23 @@ class ProductRepositoryTest {
         category.setSlug("fruit");
         categoryRepository.saveAndFlush(category);
 
-        Product product = product(2001L, "Apples");
+        Product product = product("Apples");
         product.setCategory(category);
-        productRepository.saveAndFlush(product);
+        Product persistedProduct = productRepository.saveAndFlush(product);
 
-        Product persisted = productRepository.findWithCategoryById(2001L).orElseThrow();
+        Product persisted = productRepository.findWithCategoryById(persistedProduct.getId())
+            .orElseThrow();
 
         assertThat(persisted.getCategory().getName()).isEqualTo("Fruit");
     }
 
     @Test
     void shouldPersistAndLoadProductWithAllFields() {
-        Product product = product(1001L, "Apples");
+        Product product = product("Apples");
 
-        productRepository.saveAndFlush(product);
+        Product persistedProduct = productRepository.saveAndFlush(product);
 
-        Product persisted = productRepository.findById(1001L).orElseThrow();
+        Product persisted = productRepository.findById(persistedProduct.getId()).orElseThrow();
         assertThat(persisted.getName()).isEqualTo("Apples");
         assertThat(persisted.getDescription()).isEqualTo("Fresh apples");
         assertThat(persisted.getPrice()).isEqualByComparingTo("2.49");
@@ -60,13 +61,13 @@ class ProductRepositoryTest {
 
     @Test
     void shouldRejectDuplicateProductName() {
-        productRepository.saveAndFlush(product(1001L, "Apples"));
+        productRepository.saveAndFlush(product("Apples"));
 
-        assertThatThrownBy(() -> productRepository.saveAndFlush(product(1002L, "Apples")))
+        assertThatThrownBy(() -> productRepository.saveAndFlush(product("Apples")))
             .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    private Product product(Long id, String name) {
+    private Product product(String name) {
         Category category = categoryRepository.findById(3000L).orElseGet(() -> {
             Category created = new Category();
             created.setId(3000L);
@@ -75,7 +76,6 @@ class ProductRepositoryTest {
             return categoryRepository.save(created);
         });
         Product product = new Product();
-        product.setId(id);
         product.setName(name);
         product.setDescription("Fresh apples");
         product.setPrice(new BigDecimal("2.49"));

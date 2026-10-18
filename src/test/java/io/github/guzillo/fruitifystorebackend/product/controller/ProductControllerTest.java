@@ -3,14 +3,19 @@ package io.github.guzillo.fruitifystorebackend.product.controller;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
+import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
+import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +27,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -41,6 +47,7 @@ class ProductControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(productController)
             .setMessageConverters(new JacksonJsonHttpMessageConverter())
             .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+            .setControllerAdvice(new GlobalExceptionHandler())
             .build();
     }
 
@@ -73,7 +80,7 @@ class ProductControllerTest {
         verify(productService).findProducts(org.mockito.ArgumentMatchers.argThat(pageable ->
             pageable.getPageNumber() == 0
                 && pageable.getPageSize() == 10
-                && pageable.getSort().getOrderFor("price").isDescending()));
+                && Objects.requireNonNull(pageable.getSort().getOrderFor("price")).isDescending()));
     }
 
     @Test
@@ -117,6 +124,56 @@ class ProductControllerTest {
             .andExpect(jsonPath("$.category.slug").value("fruits"));
 
         verify(productService).findProduct(1L);
+    }
+
+    @Test
+    void shouldCreateProduct() throws Exception {
+        ProductResponseDTO response = new ProductResponseDTO(
+            2L, "Apple", "Fresh apple", new BigDecimal("2.49"), 10, true,
+            "https://example.test/apple.png",
+            new CategoryResponseDTO(1L, "Fruits", "fruits"));
+        when(productService.createProduct(
+            org.mockito.ArgumentMatchers.any(ProductCreateRequestDTO.class)))
+            .thenReturn(response);
+
+        mockMvc.perform(post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Apple",
+                      "description": "Fresh apple",
+                      "price": 2.49,
+                      "stockQuantity": 10,
+                      "isActive": true,
+                      "imageUrl": "https://example.test/apple.png",
+                      "categoryId": 1
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(2))
+            .andExpect(jsonPath("$.name").value("Apple"));
+    }
+
+    @Test
+    void shouldReturnConflictWhenProductNameAlreadyExists() throws Exception {
+        when(productService.createProduct(
+            org.mockito.ArgumentMatchers.any(ProductCreateRequestDTO.class)))
+            .thenThrow(new ProductAlreadyExistsException("Apple"));
+
+        mockMvc.perform(post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Apple",
+                      "description": "Fresh apple",
+                      "price": 2.49,
+                      "stockQuantity": 10,
+                      "isActive": true,
+                      "categoryId": 1
+                    }
+                    """))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$").value("Product already exists: Apple"));
     }
 
 }

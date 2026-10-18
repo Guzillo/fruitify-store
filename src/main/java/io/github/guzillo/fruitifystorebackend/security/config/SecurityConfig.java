@@ -16,6 +16,7 @@ import org.springframework.security.access.expression.method.MethodSecurityExpre
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -51,7 +52,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/signup").permitAll()
                     .requestMatchers("/api/auth/refresh").permitAll()
                     .requestMatchers("/api/auth/logout").permitAll()
-                    .requestMatchers("/api/products").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**")
+                    .permitAll()
                     .requestMatchers("/api/categories").permitAll()
                     .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
@@ -70,7 +72,8 @@ public class SecurityConfig {
 
     @Bean
     JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(rsaKeyProperties.publicKey()).privateKey(rsaKeyProperties.privateKey()).build();
+        JWK jwk = new RSAKey.Builder(rsaKeyProperties.publicKey()).privateKey(
+            rsaKeyProperties.privateKey()).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
     }

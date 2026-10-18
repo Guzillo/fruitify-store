@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    boolean existsByName(String name);
+
     @EntityGraph(attributePaths = "category")
     Optional<Product> findWithCategoryById(Long id);
 

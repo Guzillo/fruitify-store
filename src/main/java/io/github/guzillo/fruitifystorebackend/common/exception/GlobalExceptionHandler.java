@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.common.exception;
 
 import io.github.guzillo.fruitifystorebackend.auth.exception.EmailAlreadyRegisteredException;
 import io.github.guzillo.fruitifystorebackend.auth.exception.InvalidTokenException;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
 
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ProductAlreadyExistsException.class)
+    public ResponseEntity<Object> handleProductAlreadyExistsException(
+        ProductAlreadyExistsException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

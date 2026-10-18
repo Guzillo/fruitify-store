@@ -17,6 +17,8 @@ import io.github.guzillo.fruitifystorebackend.auth.service.RefreshTokenService;
 import io.github.guzillo.fruitifystorebackend.auth.service.SignupService;
 import io.github.guzillo.fruitifystorebackend.auth.service.TokenService;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.product.controller.ProductController;
+import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
 import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
 import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
@@ -34,7 +36,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@WebMvcTest(controllers = {AuthController.class,
+@WebMvcTest(controllers = {AuthController.class, ProductController.class,
     AuthControllerIntegrationTest.ProtectedTestController.class})
 @Import({SecurityConfig.class, GlobalExceptionHandler.class,
     AuthControllerIntegrationTest.ProtectedTestController.class})
@@ -63,6 +65,9 @@ class AuthControllerIntegrationTest {
 
     @MockitoBean
     private JwtEncoder jwtEncoder;
+
+    @MockitoBean
+    private ProductService productService;
 
     @Test
     void shouldAcceptValidSignup() throws Exception {
@@ -180,6 +185,44 @@ class AuthControllerIntegrationTest {
                     "ROLE_ADMIN")))
             .andExpect(status().isOk())
             .andExpect(content().string("hello admin"));
+    }
+
+    @Test
+    void shouldRejectProductCreationForUserRole() throws Exception {
+        mockMvc.perform(post("/api/products")
+                .with(jwt().authorities(() -> "ROLE_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Apple",
+                      "description": "Fresh apple",
+                      "price": 2.49,
+                      "stockQuantity": 10,
+                      "isActive": true,
+                      "categoryId": 1
+                    }
+                    """))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowProductCreationForAdminRole() throws Exception {
+        when(productService.createProduct(any())).thenReturn(null);
+
+        mockMvc.perform(post("/api/products")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Apple",
+                      "description": "Fresh apple",
+                      "price": 2.49,
+                      "stockQuantity": 10,
+                      "isActive": true,
+                      "categoryId": 1
+                    }
+                    """))
+            .andExpect(status().isCreated());
     }
 
     @RestController

@@ -8,8 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
+import io.github.guzillo.fruitifystorebackend.category.Category;
+import io.github.guzillo.fruitifystorebackend.category.CategoryRepository;
+import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
@@ -34,6 +38,9 @@ class ProductServiceTest {
 
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private CategoryRepository categoryRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -79,6 +86,46 @@ class ProductServiceTest {
         assertThat(result.getContent()).containsExactly(response);
         verify(productRepository).findAll(pageable);
         verify(productMapper).toResponse(product);
+    }
+
+    @Test
+    void shouldCreateProductInExistingCategory() {
+        ProductCreateRequestDTO request = new ProductCreateRequestDTO(
+            "Apple", "Fresh apple", new BigDecimal("2.49"), 10, true,
+            "https://example.test/apple.png", 1L);
+        Category category = new Category();
+        Product product = new Product();
+        ProductResponseDTO response = productResponse(2L, "Apple");
+
+        when(productRepository.existsByName("Apple")).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(productMapper.toEntity(request, category)).thenReturn(product);
+        when(productRepository.save(product)).thenReturn(product);
+        when(productMapper.toResponse(product)).thenReturn(response);
+
+        assertThat(productService.createProduct(request)).isEqualTo(response);
+
+        verify(categoryRepository).findById(1L);
+        verify(productRepository).existsByName("Apple");
+        verify(productRepository).save(product);
+        verify(productMapper).toEntity(request, category);
+        verify(productMapper).toResponse(product);
+    }
+
+    @Test
+    void shouldRejectProductWithDuplicateName() {
+        ProductCreateRequestDTO request = new ProductCreateRequestDTO(
+            "Apple", "Fresh apple", new BigDecimal("2.49"), 10, true,
+            "https://example.test/apple.png", 1L);
+
+        when(productRepository.existsByName("Apple")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.createProduct(request))
+            .isInstanceOf(ProductAlreadyExistsException.class)
+            .hasMessage("Product already exists: Apple");
+
+        verify(categoryRepository, never()).findById(1L);
+        verify(productRepository, never()).save(any());
     }
 
     private ProductResponseDTO productResponse(Long id, String name) {

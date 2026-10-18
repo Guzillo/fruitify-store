@@ -1,0 +1,76 @@
+package io.github.guzillo.fruitifystorebackend.bootstrap;
+
+import io.github.guzillo.fruitifystorebackend.category.Category;
+import io.github.guzillo.fruitifystorebackend.category.CategoryRepository;
+import io.github.guzillo.fruitifystorebackend.product.model.Product;
+import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
+import io.github.guzillo.fruitifystorebackend.security.repository.RoleRepository;
+import io.github.guzillo.fruitifystorebackend.user.model.User;
+import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
+import java.math.BigDecimal;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+@Component
+@Profile("dev")
+@RequiredArgsConstructor
+public class DevDataLoader implements CommandLineRunner {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+
+    @Override
+    public void run(String... args) {
+        seedUsers();
+        seedProducts();
+    }
+
+    private void seedUsers() {
+        if (userRepository.count() == 0) {
+            userRepository.save(
+                new User("user@email.com", passwordEncoder.encode("pass1"),
+                    Set.of(roleRepository.findByName("ROLE_USER"))));
+            userRepository.save(
+                new User("admin@email.com", passwordEncoder.encode("pass2"),
+                    Set.of(roleRepository.findByName("ROLE_ADMIN"))));
+        }
+    }
+
+    private void seedProducts() {
+        if (categoryRepository.count() == 0 && productRepository.count() == 0) {
+            Category fruit = category(1L, "Fruit", "fruit");
+            Category vegetables = category(2L, "Vegetables", "vegetables");
+            categoryRepository.saveAll(Set.of(fruit, vegetables));
+            productRepository.saveAll(Set.of(
+                product("Apples", "Crisp red apples", "2.49", 25, fruit),
+                product("Carrots", "Fresh carrots", "1.79", 40, vegetables)));
+        }
+    }
+
+    private static Category category(Long id, String name, String slug) {
+        Category category = new Category();
+        category.setId(id);
+        category.setName(name);
+        category.setSlug(slug);
+        return category;
+    }
+
+    private static Product product(String name, String description,
+        String price, int stockQuantity, Category category) {
+        Product product = new Product();
+        product.setName(name);
+        product.setDescription(description);
+        product.setPrice(new BigDecimal(price));
+        product.setStockQuantity(stockQuantity);
+        product.setIsActive(true);
+        product.setCategory(category);
+        return product;
+    }
+}
