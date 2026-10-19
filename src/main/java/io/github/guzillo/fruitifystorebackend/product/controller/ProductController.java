@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +29,9 @@ public class ProductController {
 
     @GetMapping
     public ProductPageResponseDTO getProducts(
-        Pageable pageable) {
-        Page<ProductResponseDTO> products = productService.findProducts(pageable);
+        Pageable pageable, Authentication authentication) {
+        Page<ProductResponseDTO> products = productService.findProducts(
+            pageable, isAdmin(authentication));
         return new ProductPageResponseDTO(
             products.getContent(),
             products.getNumber(),
@@ -39,8 +41,9 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ProductResponseDTO getProduct(@PathVariable Long productId) {
-        return productService.findProduct(productId);
+    public ProductResponseDTO getProduct(@PathVariable Long productId,
+        Authentication authentication) {
+        return productService.findProduct(productId, isAdmin(authentication));
     }
 
     @PostMapping
@@ -55,5 +58,10 @@ public class ProductController {
     public ProductResponseDTO updateProduct(@PathVariable Long productId,
         @Valid @RequestBody ProductUpdateRequestDTO request) {
         return productService.updateProduct(productId, request);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }

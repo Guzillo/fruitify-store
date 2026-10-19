@@ -54,7 +54,7 @@ class ProductServiceTest {
         when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(response);
 
-        ProductResponseDTO result = productService.findProduct(1L);
+        ProductResponseDTO result = productService.findProduct(1L, true);
 
         assertThat(result).isEqualTo(response);
         verify(productRepository).findWithCategoryById(1L);
@@ -65,7 +65,7 @@ class ProductServiceTest {
     void shouldThrowWhenProductDoesNotExist() {
         when(productRepository.findWithCategoryById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productService.findProduct(1L))
+        assertThatThrownBy(() -> productService.findProduct(1L, true))
             .isInstanceOf(ResourceNotFoundException.class)
             .hasMessage("Product was not found: 1");
 
@@ -78,14 +78,14 @@ class ProductServiceTest {
         Product product = new Product();
         ProductResponseDTO response = productResponse(1L, "Orange");
 
-        when(productRepository.findAll(pageable))
+        when(productRepository.findAllByIsActiveTrue(pageable))
             .thenReturn(new PageImpl<>(List.of(product)));
         when(productMapper.toResponse(product)).thenReturn(response);
 
-        Page<ProductResponseDTO> result = productService.findProducts(pageable);
+        Page<ProductResponseDTO> result = productService.findProducts(pageable, false);
 
         assertThat(result.getContent()).containsExactly(response);
-        verify(productRepository).findAll(pageable);
+        verify(productRepository).findAllByIsActiveTrue(pageable);
         verify(productMapper).toResponse(product);
     }
 
@@ -218,7 +218,6 @@ class ProductServiceTest {
             "Juicy fruit",
             new BigDecimal("2.49"),
             25,
-            true,
             "https://example.test/" + name.toLowerCase() + ".png",
             new CategoryResponseDTO(1L, "Fruits", "fruits"));
     }

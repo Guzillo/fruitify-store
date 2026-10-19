@@ -61,11 +61,12 @@ class ProductControllerTest {
             "Lekkie buty do biegania",
             new BigDecimal("199.99"),
             12,
-            true,
             "https://example.test/shoes.png",
             new CategoryResponseDTO(1L, "Obuwie", "obuwie"));
         Page<ProductResponseDTO> response = new PageImpl<>(List.of(product));
-        when(productService.findProducts(org.mockito.ArgumentMatchers.any(Pageable.class)))
+        when(productService.findProducts(
+            org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(response);
 
         mockMvc.perform(get("/api/products")
@@ -79,24 +80,31 @@ class ProductControllerTest {
             .andExpect(jsonPath("$.number").value(0))
             .andExpect(jsonPath("$.size").value(1));
 
-        verify(productService).findProducts(org.mockito.ArgumentMatchers.argThat(pageable ->
-            pageable.getPageNumber() == 0
-                && pageable.getPageSize() == 10
-                && Objects.requireNonNull(pageable.getSort().getOrderFor("price")).isDescending()));
+        verify(productService).findProducts(
+            org.mockito.ArgumentMatchers.argThat(pageable ->
+                pageable.getPageNumber() == 0
+                    && pageable.getPageSize() == 10
+                    && Objects.requireNonNull(
+                        pageable.getSort().getOrderFor("price")).isDescending()),
+            org.mockito.ArgumentMatchers.eq(false));
     }
 
     @Test
     void shouldUseSpringDefaultsWithoutOptionalParameters() throws Exception {
-        when(productService.findProducts(org.mockito.ArgumentMatchers.any(Pageable.class)))
+        when(productService.findProducts(
+            org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/api/products"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isEmpty());
 
-        verify(productService).findProducts(org.mockito.ArgumentMatchers.argThat(
-            pageable -> pageable.isPaged() && pageable.getPageNumber() == 0
-                && pageable.getPageSize() == 20 && pageable.getSort().isUnsorted()));
+        verify(productService).findProducts(
+            org.mockito.ArgumentMatchers.argThat(
+                pageable -> pageable.isPaged() && pageable.getPageNumber() == 0
+                    && pageable.getPageSize() == 20 && pageable.getSort().isUnsorted()),
+            org.mockito.ArgumentMatchers.eq(false));
     }
 
     @Test
@@ -107,10 +115,9 @@ class ProductControllerTest {
             "Juicy orange",
             new BigDecimal("2.49"),
             25,
-            true,
             "https://example.test/orange.png",
             new CategoryResponseDTO(1L, "Fruits", "fruits"));
-        when(productService.findProduct(1L)).thenReturn(product);
+        when(productService.findProduct(1L, false)).thenReturn(product);
 
         mockMvc.perform(get("/api/products/1"))
             .andExpect(status().isOk())
@@ -119,19 +126,18 @@ class ProductControllerTest {
             .andExpect(jsonPath("$.description").value("Juicy orange"))
             .andExpect(jsonPath("$.price").value(2.49))
             .andExpect(jsonPath("$.stockQuantity").value(25))
-            .andExpect(jsonPath("$.isActive").value(true))
             .andExpect(jsonPath("$.imageUrl").value("https://example.test/orange.png"))
             .andExpect(jsonPath("$.category.id").value(1))
             .andExpect(jsonPath("$.category.name").value("Fruits"))
             .andExpect(jsonPath("$.category.slug").value("fruits"));
 
-        verify(productService).findProduct(1L);
+        verify(productService).findProduct(1L, false);
     }
 
     @Test
     void shouldCreateProduct() throws Exception {
         ProductResponseDTO response = new ProductResponseDTO(
-            2L, "Apple", "Fresh apple", new BigDecimal("2.49"), 10, true,
+            2L, "Apple", "Fresh apple", new BigDecimal("2.49"), 10,
             "https://example.test/apple.png",
             new CategoryResponseDTO(1L, "Fruits", "fruits"));
         when(productService.createProduct(
@@ -181,7 +187,7 @@ class ProductControllerTest {
     @Test
     void shouldUpdateProduct() throws Exception {
         ProductResponseDTO response = new ProductResponseDTO(
-            1L, "Apple", "Updated apple", new BigDecimal("3.49"), 50, true,
+            1L, "Apple", "Updated apple", new BigDecimal("3.49"), 50,
             null, new CategoryResponseDTO(1L, "Fruits", "fruits"));
         when(productService.updateProduct(
             org.mockito.ArgumentMatchers.eq(1L),

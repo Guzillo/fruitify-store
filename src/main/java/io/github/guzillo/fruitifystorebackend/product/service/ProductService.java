@@ -8,12 +8,14 @@ import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
+import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,14 +26,20 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponseDTO> findProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
+    public Page<ProductResponseDTO> findProducts(Pageable pageable, boolean includeInactive) {
+        Page<Product> products = includeInactive
+            ? productRepository.findAll(pageable)
+            : productRepository.findAllByIsActiveTrue(pageable);
+        return products
             .map(productMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public ProductResponseDTO findProduct(Long id) {
-        return productRepository.findWithCategoryById(id)
+    public ProductResponseDTO findProduct(Long id, boolean includeInactive) {
+        Optional<Product> product = includeInactive
+            ? productRepository.findWithCategoryById(id)
+            : productRepository.findWithCategoryByIdAndIsActiveTrue(id);
+        return product
             .map(productMapper::toResponse)
             .orElseThrow(() -> new ResourceNotFoundException("Product", id));
     }

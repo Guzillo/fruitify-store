@@ -9,7 +9,6 @@ public record ProductResponseDTO(
     String description,
     BigDecimal price,
     Integer stockQuantity,
-    Boolean isActive,
     String imageUrl,
     CategoryResponseDTO category
 ) {
