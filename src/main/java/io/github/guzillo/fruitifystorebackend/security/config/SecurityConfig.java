@@ -54,7 +54,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/logout").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**")
                     .permitAll()
-                    .requestMatchers("/api/categories").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                     .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                 jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

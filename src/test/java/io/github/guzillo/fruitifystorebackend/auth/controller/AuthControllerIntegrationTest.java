@@ -19,6 +19,8 @@ import io.github.guzillo.fruitifystorebackend.auth.exception.InvalidTokenExcepti
 import io.github.guzillo.fruitifystorebackend.auth.service.RefreshTokenService;
 import io.github.guzillo.fruitifystorebackend.auth.service.SignupService;
 import io.github.guzillo.fruitifystorebackend.auth.service.TokenService;
+import io.github.guzillo.fruitifystorebackend.category.controller.CategoryController;
+import io.github.guzillo.fruitifystorebackend.category.service.CategoryService;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
 import io.github.guzillo.fruitifystorebackend.product.controller.ProductController;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
@@ -40,7 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @WebMvcTest(controllers = {AuthController.class, ProductController.class,
-    AuthControllerIntegrationTest.ProtectedTestController.class})
+    CategoryController.class, AuthControllerIntegrationTest.ProtectedTestController.class})
 @Import({SecurityConfig.class, GlobalExceptionHandler.class,
     AuthControllerIntegrationTest.ProtectedTestController.class})
 class AuthControllerIntegrationTest {
@@ -71,6 +73,9 @@ class AuthControllerIntegrationTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private CategoryService categoryService;
 
     @Test
     void shouldAcceptValidSignup() throws Exception {
@@ -263,6 +268,70 @@ class AuthControllerIntegrationTest {
             .andExpect(status().isNoContent());
 
         verify(productService).deleteProduct(1L);
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedCategoryCreation() throws Exception {
+        mockMvc.perform(post("/api/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "Berries", "slug": "berries"}
+                    """))
+            .andExpect(status().isUnauthorized());
+
+        verify(categoryService, never()).createCategory(any());
+    }
+
+    @Test
+    void shouldRejectCategoryCreationForUserRole() throws Exception {
+        mockMvc.perform(post("/api/categories")
+                .with(jwt().authorities(() -> "ROLE_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "Berries", "slug": "berries"}
+                    """))
+            .andExpect(status().isForbidden());
+
+        verify(categoryService, never()).createCategory(any());
+    }
+
+    @Test
+    void shouldAllowCategoryCreationForAdminRole() throws Exception {
+        mockMvc.perform(post("/api/categories")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "Berries", "slug": "berries"}
+                    """))
+            .andExpect(status().isCreated());
+
+        verify(categoryService).createCategory(any());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedCategoryDeletion() throws Exception {
+        mockMvc.perform(delete("/api/categories/1"))
+            .andExpect(status().isUnauthorized());
+
+        verify(categoryService, never()).deleteCategory(any());
+    }
+
+    @Test
+    void shouldRejectCategoryDeletionForUserRole() throws Exception {
+        mockMvc.perform(delete("/api/categories/1")
+                .with(jwt().authorities(() -> "ROLE_USER")))
+            .andExpect(status().isForbidden());
+
+        verify(categoryService, never()).deleteCategory(any());
+    }
+
+    @Test
+    void shouldAllowCategoryDeletionForAdminRole() throws Exception {
+        mockMvc.perform(delete("/api/categories/1")
+                .with(jwt().authorities(() -> "ROLE_ADMIN")))
+            .andExpect(status().isNoContent());
+
+        verify(categoryService).deleteCategory(1L);
     }
 
     @RestController

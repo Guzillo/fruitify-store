@@ -45,18 +45,16 @@ public class DevDataLoader implements CommandLineRunner {
 
     private void seedProducts() {
         if (categoryRepository.count() == 0 && productRepository.count() == 0) {
-            Category fruit = category(1L, "Fruit", "fruit");
-            Category vegetables = category(2L, "Vegetables", "vegetables");
-            categoryRepository.saveAll(Set.of(fruit, vegetables));
+            Category fruit = categoryRepository.save(category("Fruit", "fruit"));
+            Category vegetables = categoryRepository.save(category("Vegetables", "vegetables"));
             productRepository.saveAll(Set.of(
                 product("Apples", "Crisp red apples", "2.49", 25, fruit),
                 product("Carrots", "Fresh carrots", "1.79", 40, vegetables)));
         }
     }
 
-    private static Category category(Long id, String name, String slug) {
+    private static Category category(String name, String slug) {
         Category category = new Category();
-        category.setId(id);
         category.setName(name);
         category.setSlug(slug);
         return category;

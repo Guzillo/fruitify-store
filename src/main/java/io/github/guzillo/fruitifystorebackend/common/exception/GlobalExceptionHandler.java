@@ -2,6 +2,8 @@ package io.github.guzillo.fruitifystorebackend.common.exception;
 
 import io.github.guzillo.fruitifystorebackend.auth.exception.EmailAlreadyRegisteredException;
 import io.github.guzillo.fruitifystorebackend.auth.exception.InvalidTokenException;
+import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlreadyExistsException;
+import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +25,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
 
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(CategoryAlreadyExistsException.class)
+    public ResponseEntity<Object> handleCategoryAlreadyExistsException(
+        CategoryAlreadyExistsException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(CategoryInUseException.class)
+    public ResponseEntity<Object> handleCategoryInUseException(
+        CategoryInUseException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)

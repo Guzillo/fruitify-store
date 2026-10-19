@@ -29,10 +29,9 @@ class ProductRepositoryTest {
     @Test
     void shouldFetchProductWithCategory() {
         Category category = new Category();
-        category.setId(2001L);
         category.setName("Fruit");
         category.setSlug("fruit");
-        categoryRepository.saveAndFlush(category);
+        category = categoryRepository.saveAndFlush(category);
 
         Product product = product("Apples");
         product.setCategory(category);
@@ -68,9 +67,8 @@ class ProductRepositoryTest {
     }
 
     private Product product(String name) {
-        Category category = categoryRepository.findById(3000L).orElseGet(() -> {
+        Category category = categoryRepository.findAll().stream().findFirst().orElseGet(() -> {
             Category created = new Category();
-            created.setId(3000L);
             created.setName("Test category");
             created.setSlug("test-category");
             return categoryRepository.save(created);
