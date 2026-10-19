@@ -1,0 +1,140 @@
+package io.github.guzillo.fruitifystorebackend.cart.controller;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
+import io.github.guzillo.fruitifystorebackend.cart.service.CartService;
+import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
+import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
+import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
+import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
+import java.math.BigDecimal;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(controllers = CartController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
+class CartControllerTest {
+
+    private static final String VALID_BODY = """
+        {"productId": 100, "quantity": 2}
+        """;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private CartService cartService;
+
+    @MockitoBean
+    private CustomUserDetailsService userDetailsService;
+
+    @MockitoBean
+    private RsaKeyProperties rsaKeyProperties;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
+
+    @MockitoBean
+    private JwtEncoder jwtEncoder;
+
+    @Test
+    void shouldAddItemToCartForAuthenticatedUser() throws Exception {
+        when(cartService.addItem(any(), any())).thenReturn(
+            new CartItemResponseDTO(50L, 100L, "Apple", new BigDecimal("2.49"), 2));
+
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(VALID_BODY))
+            .andExpect(status().isCreated())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.id").value(50))
+            .andExpect(jsonPath("$.productId").value(100))
+            .andExpect(jsonPath("$.productName").value("Apple"))
+            .andExpect(jsonPath("$.price").value(2.49))
+            .andExpect(jsonPath("$.quantity").value(2));
+
+        verify(cartService).addItem("user@example.com",
+            new CartItemCreateRequestDTO(
+                100L, 2));
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedRequest() throws Exception {
+        mockMvc.perform(post("/api/cart/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(VALID_BODY))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldRejectMissingProductId() throws Exception {
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"quantity": 2}
+                    """))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldRejectNonPositiveQuantity() throws Exception {
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"productId": 100, "quantity": 0}
+                    """))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenProductDoesNotExist() throws Exception {
+        when(cartService.addItem(any(), any()))
+            .thenThrow(new ResourceNotFoundException("Product", 100L));
+
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(VALID_BODY))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnConflictWhenProductIsInactive() throws Exception {
+        when(cartService.addItem(any(), any()))
+            .thenThrow(new ProductNotActiveException(100L));
+
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(VALID_BODY))
+            .andExpect(status().isConflict());
+    }
+}

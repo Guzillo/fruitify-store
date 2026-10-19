@@ -1,5 +1,7 @@
 package io.github.guzillo.fruitifystorebackend.bootstrap;
 
+import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
+import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.category.Category;
 import io.github.guzillo.fruitifystorebackend.category.CategoryRepository;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
@@ -25,6 +27,7 @@ public class DevDataLoader implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
 
     @Override
     public void run(String... args) {
@@ -34,13 +37,17 @@ public class DevDataLoader implements CommandLineRunner {
 
     private void seedUsers() {
         if (userRepository.count() == 0) {
-            userRepository.save(
-                new User("user@email.com", passwordEncoder.encode("pass1"),
-                    Set.of(roleRepository.findByName("ROLE_USER"))));
-            userRepository.save(
-                new User("admin@email.com", passwordEncoder.encode("pass2"),
-                    Set.of(roleRepository.findByName("ROLE_ADMIN"))));
+            saveUserWithCart(new User("user@email.com", passwordEncoder.encode("pass1"),
+                Set.of(roleRepository.findByName("ROLE_USER"))));
+            saveUserWithCart(new User("admin@email.com", passwordEncoder.encode("pass2"),
+                Set.of(roleRepository.findByName("ROLE_ADMIN"))));
         }
+    }
+
+    private void saveUserWithCart(User user) {
+        Cart cart = new Cart();
+        cart.setUser(userRepository.save(user));
+        cartRepository.save(cart);
     }
 
     private void seedProducts() {

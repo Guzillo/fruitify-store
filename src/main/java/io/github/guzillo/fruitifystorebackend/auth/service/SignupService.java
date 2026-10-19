@@ -2,6 +2,8 @@ package io.github.guzillo.fruitifystorebackend.auth.service;
 
 import io.github.guzillo.fruitifystorebackend.auth.dto.SignupUserDto;
 import io.github.guzillo.fruitifystorebackend.auth.exception.EmailAlreadyRegisteredException;
+import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
+import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.security.repository.RoleRepository;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
@@ -17,6 +19,7 @@ public class SignupService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final CartRepository cartRepository;
 
     public void signup(SignupUserDto signupUserDto) {
         Optional<User> foundUser = userRepository.findByEmail(signupUserDto.email());
@@ -32,7 +35,11 @@ public class SignupService {
         user.setFirstName(signupUserDto.firstName());
         user.setLastName(signupUserDto.lastName());
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        Cart cart = new Cart();
+        cart.setUser(savedUser);
+        cartRepository.save(cart);
     }
 
 }
