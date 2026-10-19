@@ -2,9 +2,11 @@ package io.github.guzillo.fruitifystorebackend.auth.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -235,6 +237,32 @@ class AuthControllerIntegrationTest {
                     {"price": 3.49}
                     """))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedProductDeletion() throws Exception {
+        mockMvc.perform(delete("/api/products/1"))
+            .andExpect(status().isUnauthorized());
+
+        verify(productService, never()).deleteProduct(any());
+    }
+
+    @Test
+    void shouldRejectProductDeletionForUserRole() throws Exception {
+        mockMvc.perform(delete("/api/products/1")
+                .with(jwt().authorities(() -> "ROLE_USER")))
+            .andExpect(status().isForbidden());
+
+        verify(productService, never()).deleteProduct(any());
+    }
+
+    @Test
+    void shouldAllowProductDeletionForAdminRole() throws Exception {
+        mockMvc.perform(delete("/api/products/1")
+                .with(jwt().authorities(() -> "ROLE_ADMIN")))
+            .andExpect(status().isNoContent());
+
+        verify(productService).deleteProduct(1L);
     }
 
     @RestController

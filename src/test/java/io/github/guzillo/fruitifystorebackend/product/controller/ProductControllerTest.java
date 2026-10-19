@@ -1,7 +1,9 @@
 package io.github.guzillo.fruitifystorebackend.product.controller;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -10,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
@@ -211,6 +214,23 @@ class ProductControllerTest {
             .andExpect(jsonPath("$.price").value(3.49))
             .andExpect(jsonPath("$.description").value("Updated apple"))
             .andExpect(jsonPath("$.stockQuantity").value(50));
+    }
+
+    @Test
+    void shouldDeleteProduct() throws Exception {
+        mockMvc.perform(delete("/api/products/1"))
+            .andExpect(status().isNoContent());
+
+        verify(productService).deleteProduct(1L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingMissingProduct() throws Exception {
+        doThrow(new ResourceNotFoundException("Product", 1L))
+            .when(productService).deleteProduct(1L);
+
+        mockMvc.perform(delete("/api/products/1"))
+            .andExpect(status().isNotFound());
     }
 
 }

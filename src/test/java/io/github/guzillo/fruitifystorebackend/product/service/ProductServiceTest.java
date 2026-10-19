@@ -211,6 +211,28 @@ class ProductServiceTest {
             .hasMessage("Product was not found: 1");
     }
 
+    @Test
+    void shouldDeleteExistingProduct() {
+        Product product = new Product();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.deleteProduct(1L);
+
+        verify(productRepository).delete(product);
+    }
+
+    @Test
+    void shouldThrowWhenDeletingMissingProduct() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.deleteProduct(1L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessage("Product was not found: 1");
+
+        verify(productRepository, never()).delete(any());
+    }
+
     private ProductResponseDTO productResponse(Long id, String name) {
         return new ProductResponseDTO(
             id,
