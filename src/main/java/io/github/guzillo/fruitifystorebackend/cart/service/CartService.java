@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.cart.service;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
 import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
@@ -13,6 +14,8 @@ import io.github.guzillo.fruitifystorebackend.product.repository.ProductReposito
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
+import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +29,20 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
+    public CartResponseDTO findCart(String email) {
+        User user = findUserByEmail(email);
+        return cartRepository.findWithItemsByUserId(user.getId())
+            .map(cart -> new CartResponseDTO(cart.getId(), cart.getCartItems().stream()
+                .sorted(Comparator.comparing(CartItem::getId))
+                .map(this::toItemResponse)
+                .toList()))
+            .orElseGet(() -> new CartResponseDTO(null, List.of()));
+    }
+
     @Transactional
     public CartItemResponseDTO addItem(String email, CartItemCreateRequestDTO request) {
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));
+        User user = findUserByEmail(email);
         Product product = productRepository.findById(request.productId())
             .orElseThrow(() -> new ResourceNotFoundException("Product", request.productId()));
         if (!Boolean.TRUE.equals(product.getIsActive())) {
@@ -43,13 +56,12 @@ public class CartService {
             .orElseGet(() -> createCartItem(cart, product));
         cartItem.setQuantity(cartItem.getQuantity() + request.quantity());
 
-        CartItem saved = cartItemRepository.save(cartItem);
-        return new CartItemResponseDTO(
-            saved.getId(),
-            product.getId(),
-            product.getName(),
-            product.getPrice(),
-            saved.getQuantity());
+        return toItemResponse(cartItemRepository.save(cartItem));
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));
     }
 
     private Cart createCart(User user) {
@@ -64,5 +76,15 @@ public class CartService {
         cartItem.setProduct(product);
         cartItem.setQuantity(0);
         return cartItem;
+    }
+
+    private CartItemResponseDTO toItemResponse(CartItem cartItem) {
+        Product product = cartItem.getProduct();
+        return new CartItemResponseDTO(
+            cartItem.getId(),
+            product.getId(),
+            product.getName(),
+            product.getPrice(),
+            cartItem.getQuantity());
     }
 }

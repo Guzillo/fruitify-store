@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
 import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
@@ -21,6 +22,7 @@ import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNo
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -177,6 +179,46 @@ class CartServiceTest {
 
         verify(productRepository, never()).findById(any());
         verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldReturnCartWithItemsForUser() {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProduct(activeProduct);
+        item.setQuantity(3);
+        setId(item, 50L);
+        cart.getCartItems().add(item);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartRepository.findWithItemsByUserId(1L)).thenReturn(Optional.of(cart));
+
+        CartResponseDTO response = cartService.findCart(EMAIL);
+
+        assertThat(response).isEqualTo(new CartResponseDTO(10L, List.of(
+            new CartItemResponseDTO(50L, 100L, "Apple", new BigDecimal("2.49"), 3))));
+        verify(cartRepository, never()).save(any(Cart.class));
+    }
+
+    @Test
+    void shouldReturnEmptyCartWhenUserHasNoCart() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartRepository.findWithItemsByUserId(1L)).thenReturn(Optional.empty());
+
+        CartResponseDTO response = cartService.findCart(EMAIL);
+
+        assertThat(response).isEqualTo(new CartResponseDTO(null, List.of()));
+        verify(cartRepository, never()).save(any(Cart.class));
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnFindCart() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.findCart(EMAIL))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(cartRepository, never()).findWithItemsByUserId(any());
     }
 
     private static void setId(Object entity, Long id) {

@@ -6,6 +6,7 @@ import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import jakarta.validation.Valid;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -71,6 +72,6 @@ public class ProductController {
 
     private boolean isAdmin(Authentication authentication) {
         return authentication != null && authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+            .anyMatch(authority -> Objects.equals(authority.getAuthority(), "ROLE_ADMIN"));
     }
 }

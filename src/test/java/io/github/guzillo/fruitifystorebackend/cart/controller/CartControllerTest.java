@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.service.CartService;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
@@ -20,6 +22,7 @@ import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
 import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
 import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
 import java.math.BigDecimal;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -136,5 +139,28 @@ class CartControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(VALID_BODY))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnCartForAuthenticatedUser() throws Exception {
+        when(cartService.findCart("user@example.com")).thenReturn(new CartResponseDTO(10L,
+            List.of(new CartItemResponseDTO(50L, 100L, "Apple", new BigDecimal("2.49"), 3))));
+
+        mockMvc.perform(get("/api/cart")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com"))))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.id").value(10))
+            .andExpect(jsonPath("$.items[0].productId").value(100))
+            .andExpect(jsonPath("$.items[0].productName").value("Apple"))
+            .andExpect(jsonPath("$.items[0].quantity").value(3));
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedGetCart() throws Exception {
+        mockMvc.perform(get("/api/cart"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(cartService);
     }
 }
