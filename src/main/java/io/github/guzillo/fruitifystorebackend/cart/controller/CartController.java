@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -42,5 +43,11 @@ public class CartController {
         @Valid @RequestBody CartItemUpdateRequestDTO request,
         Authentication authentication) {
         return cartService.updateItemQuantity(authentication.getName(), itemId, request);
+    }
+
+    @DeleteMapping("/items/{itemId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteItem(@PathVariable Long itemId, Authentication authentication) {
+        cartService.deleteItem(authentication.getName(), itemId);
     }
 }

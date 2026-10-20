@@ -1,10 +1,12 @@
 package io.github.guzillo.fruitifystorebackend.cart.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -235,5 +237,32 @@ class CartControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(VALID_BODY))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldDeleteCartItemForAuthenticatedUser() throws Exception {
+        mockMvc.perform(delete("/api/cart/items/50")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com"))))
+            .andExpect(status().isNoContent());
+
+        verify(cartService).deleteItem("user@example.com", 50L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingMissingCartItem() throws Exception {
+        doThrow(new ResourceNotFoundException("CartItem", 50L))
+            .when(cartService).deleteItem(any(), any());
+
+        mockMvc.perform(delete("/api/cart/items/50")
+                .with(jwt()))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedDelete() throws Exception {
+        mockMvc.perform(delete("/api/cart/items/50"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(cartService);
     }
 }

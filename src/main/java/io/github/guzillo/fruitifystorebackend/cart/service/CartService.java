@@ -83,6 +83,14 @@ public class CartService {
         return toItemResponse(cartItemRepository.save(cartItem));
     }
 
+    @Transactional
+    public void deleteItem(String email, Long itemId) {
+        User user = findUserByEmail(email);
+        CartItem cartItem = cartItemRepository.findByIdAndCartUserId(itemId, user.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("CartItem", itemId));
+        cartItemRepository.delete(cartItem);
+    }
+
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));

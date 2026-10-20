@@ -342,6 +342,44 @@ class CartServiceTest {
     }
 
     @Test
+    void shouldDeleteOwnCartItem() {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProduct(activeProduct);
+        item.setQuantity(3);
+        setId(item, 50L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.of(item));
+
+        cartService.deleteItem(EMAIL, 50L);
+
+        verify(cartItemRepository).delete(item);
+    }
+
+    @Test
+    void shouldThrowWhenDeletingCartItemThatDoesNotBelongToUser() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.deleteItem(EMAIL, 50L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("CartItem");
+
+        verify(cartItemRepository, never()).delete(any(CartItem.class));
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnDelete() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.deleteItem(EMAIL, 50L))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(cartItemRepository, never()).findByIdAndCartUserId(any(), any());
+    }
+
+    @Test
     void shouldThrowWhenCartItemDoesNotBelongToUser() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.empty());
