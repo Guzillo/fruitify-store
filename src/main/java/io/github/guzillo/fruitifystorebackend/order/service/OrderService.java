@@ -14,6 +14,7 @@ import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
+import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderItem;
@@ -59,6 +60,36 @@ public class OrderService {
             page.getSize(),
             page.getTotalElements(),
             page.getTotalPages());
+    }
+
+    @Transactional
+    public OrderResponseDTO changeStatus(Long orderId, OrderStatus target) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        if (!order.getStatus().canTransitionTo(target)) {
+            throw new InvalidOrderStatusTransitionException(order.getStatus(), target);
+        }
+        if (target == OrderStatus.CANCELLED) {
+            restoreStock(order);
+        }
+        order.setStatus(target);
+        return orderMapper.toResponse(order);
+    }
+
+    private void restoreStock(Order order) {
+        List<Long> productIds = order.getOrderItems().stream()
+            .map(item -> item.getProduct().getId())
+            .toList();
+        Map<Long, Product> products = productRepository.findAllByIdInForUpdate(productIds)
+            .stream()
+            .collect(Collectors.toMap(Product::getId, Function.identity()));
+        for (OrderItem item : order.getOrderItems()) {
+            Product product = products.get(item.getProduct().getId());
+            if (product == null) {
+                throw new ResourceNotFoundException("Product", item.getProduct().getId());
+            }
+            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+        }
     }
 
     @Transactional(readOnly = true)

@@ -22,7 +22,10 @@ import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
+import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
+import io.github.guzillo.fruitifystorebackend.order.model.OrderItem;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
+import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
 import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
 import io.github.guzillo.fruitifystorebackend.order.repository.OrderRepository;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
@@ -305,5 +308,69 @@ class OrderServiceTest {
             .isInstanceOf(AuthenticatedUserNotFoundException.class);
 
         verify(orderRepository, never()).findByUserId(any(), any());
+    }
+
+    @Test
+    void shouldMarkPendingOrderAsPaidWithoutTouchingStock() {
+        Order order = orderInStatus(OrderStatus.PENDING);
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+
+        OrderResponseDTO response = orderService.changeStatus(200L, OrderStatus.PAID);
+
+        assertThat(response.status()).isEqualTo(OrderStatus.PAID);
+        assertThat(product.getStockQuantity()).isEqualTo(7);
+        verify(productRepository, never()).findAllByIdInForUpdate(any());
+    }
+
+    @Test
+    void shouldCancelPendingOrderAndRestoreStock() {
+        Order order = orderInStatus(OrderStatus.PENDING);
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+        when(productRepository.findAllByIdInForUpdate(List.of(100L))).thenReturn(List.of(product));
+
+        OrderResponseDTO response = orderService.changeStatus(200L, OrderStatus.CANCELLED);
+
+        assertThat(response.status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(10);
+    }
+
+    @Test
+    void shouldRejectChangeFromCancelledWithoutTouchingStock() {
+        Order order = orderInStatus(OrderStatus.CANCELLED);
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.changeStatus(200L, OrderStatus.PAID))
+            .isInstanceOf(InvalidOrderStatusTransitionException.class);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(7);
+    }
+
+    @Test
+    void shouldThrowWhenOrderToChangeDoesNotExist() {
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.changeStatus(200L, OrderStatus.PAID))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("Order");
+    }
+
+    private Order orderInStatus(OrderStatus status) {
+        product.setStockQuantity(7);
+        Order order = new Order();
+        order.setOrderNumber("ORD-ABCDEF123456");
+        order.setStatus(status);
+        order.setTotalAmount(new BigDecimal("7.47"));
+        order.setUser(user);
+        order.setShippingAddress(new ShippingAddress());
+        setId(order, 200L);
+
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setQuantity(3);
+        item.setPriceAtPurchase(new BigDecimal("2.49"));
+        order.getOrderItems().add(item);
+        return order;
     }
 }

@@ -87,4 +87,19 @@ class OrderServiceIntegrationTest {
         product.setCategory(category);
         return productRepository.saveAndFlush(product);
     }
+
+    @Test
+    void shouldRestoreStockWhenOrderIsCancelled() {
+        String email = "order-" + UUID.randomUUID() + "@example.com";
+        userRepository.saveAndFlush(new User(email, "password", new LinkedHashSet<>()));
+        Product product = createProduct(10);
+        cartService.addItem(email, new CartItemCreateRequestDTO(product.getId(), 3));
+        OrderResponseDTO order = orderService.createOrder(email, new OrderCreateRequestDTO(
+            new ShippingAddressDTO("Jan Kowalski", "Marszałkowska 1", "Warsaw", "00-001", "PL")));
+
+        orderService.changeStatus(order.id(), OrderStatus.CANCELLED);
+
+        Product reloaded = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(reloaded.getStockQuantity()).isEqualTo(10);
+    }
 }

@@ -8,10 +8,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
 import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
@@ -22,6 +26,7 @@ import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetails
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +106,78 @@ class AdminOrderControllerTest {
                 .with(jwt().authorities(() -> "ROLE_ADMIN"))
                 .queryParam("sort", "user.password,asc"))
             .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void shouldChangeOrderStatusForAdmin() throws Exception {
+        when(orderService.changeStatus(any(), any())).thenReturn(new OrderResponseDTO(
+            200L, "ORD-0123456789AB", OrderStatus.PAID, new BigDecimal("7.47"), null, List.of(),
+            null));
+
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"PAID\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("PAID"));
+
+        verify(orderService).changeStatus(200L, OrderStatus.PAID);
+    }
+
+    @Test
+    void shouldRejectStatusChangeForRegularUser() throws Exception {
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .with(jwt().authorities(() -> "ROLE_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"PAID\"}"))
+            .andExpect(status().isForbidden());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void shouldRejectUnknownStatusValue() throws Exception {
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"SHIPPED\"}"))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void shouldReturnConflictForInvalidTransition() throws Exception {
+        when(orderService.changeStatus(any(), any())).thenThrow(
+            new InvalidOrderStatusTransitionException(OrderStatus.CANCELLED, OrderStatus.PAID));
+
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"PAID\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnNotFoundForMissingOrder() throws Exception {
+        when(orderService.changeStatus(any(), any()))
+            .thenThrow(new ResourceNotFoundException("Order", 200L));
+
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"PAID\"}"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedStatusChange() throws Exception {
+        mockMvc.perform(patch("/api/admin/orders/200/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"PAID\"}"))
+            .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(orderService);
     }
