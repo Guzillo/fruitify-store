@@ -8,6 +8,7 @@ import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlready
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
+import io.github.guzillo.fruitifystorebackend.common.exception.InvalidSortPropertyException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -76,6 +77,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProductNotActiveException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidSortPropertyException.class)
+    public ResponseEntity<Object> handleInvalidSortPropertyException(
+        InvalidSortPropertyException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.product.controller;
 
+import io.github.guzillo.fruitifystorebackend.common.pagination.PageableSortValidator;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
@@ -7,9 +8,12 @@ import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDT
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
 import jakarta.validation.Valid;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,11 +32,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProductController {
 
+    private static final Set<String> SORTABLE_PROPERTIES =
+        Set.of("id", "name", "price", "stockQuantity");
+
     private final ProductService productService;
 
     @GetMapping
     public ProductPageResponseDTO getProducts(
+        @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC)
         Pageable pageable, Authentication authentication) {
+        PageableSortValidator.validate(pageable, SORTABLE_PROPERTIES);
         Page<ProductResponseDTO> products = productService.findProducts(
             pageable, isAdmin(authentication));
         return new ProductPageResponseDTO(

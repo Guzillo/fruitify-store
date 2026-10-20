@@ -93,7 +93,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void shouldUseSpringDefaultsWithoutOptionalParameters() throws Exception {
+    void shouldListProductsSortedByNameWithPageSizeTwentyByDefault() throws Exception {
         when(productService.findProducts(
             org.mockito.ArgumentMatchers.any(Pageable.class),
             org.mockito.ArgumentMatchers.anyBoolean()))
@@ -106,8 +106,18 @@ class ProductControllerTest {
         verify(productService).findProducts(
             org.mockito.ArgumentMatchers.argThat(
                 pageable -> pageable.isPaged() && pageable.getPageNumber() == 0
-                    && pageable.getPageSize() == 20 && pageable.getSort().isUnsorted()),
+                    && pageable.getPageSize() == 20
+                    && pageable.getSort().getOrderFor("name") != null
+                    && pageable.getSort().getOrderFor("name").isAscending()),
             org.mockito.ArgumentMatchers.eq(false));
+    }
+
+    @Test
+    void shouldRejectUnsupportedSortProperty() throws Exception {
+        mockMvc.perform(get("/api/products").queryParam("sort", "category.name,asc"))
+            .andExpect(status().isBadRequest());
+
+        org.mockito.Mockito.verifyNoInteractions(productService);
     }
 
     @Test

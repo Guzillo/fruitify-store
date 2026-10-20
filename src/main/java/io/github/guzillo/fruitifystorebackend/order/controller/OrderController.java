@@ -1,10 +1,12 @@
 package io.github.guzillo.fruitifystorebackend.order.controller;
 
+import io.github.guzillo.fruitifystorebackend.common.pagination.PageableSortValidator;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
 import jakarta.validation.Valid;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,12 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OrderController {
 
+    private static final Set<String> SORTABLE_PROPERTIES = Set.of("createdAt", "totalAmount");
+
     private final OrderService orderService;
 
     @GetMapping
     public OrderPageResponseDTO findOrders(
-        @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+        @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+        Pageable pageable,
         Authentication authentication) {
+        PageableSortValidator.validate(pageable, SORTABLE_PROPERTIES);
         return orderService.findOrders(authentication.getName(), pageable);
     }
 

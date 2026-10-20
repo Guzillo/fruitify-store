@@ -155,8 +155,34 @@ class OrderControllerTest {
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(orderService).findOrders(eq("user@example.com"), pageable.capture());
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(20);
         assertThat(pageable.getValue().getSort().getOrderFor("createdAt").isDescending())
             .isTrue();
+    }
+
+    @Test
+    void shouldCapPageSizeAtConfiguredMaximum() throws Exception {
+        when(orderService.findOrders(any(), any())).thenReturn(
+            new OrderPageResponseDTO(List.of(), 0, 100, 0, 0));
+
+        mockMvc.perform(get("/api/orders")
+                .with(jwt().jwt(jwt -> jwt.subject("user-cap@example.com")))
+                .queryParam("size", "500"))
+            .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(orderService).findOrders(eq("user-cap@example.com"), pageable.capture());
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldRejectUnsupportedSortPropertyForOrders() throws Exception {
+        mockMvc.perform(get("/api/orders")
+                .with(jwt())
+                .queryParam("sort", "user.email,asc"))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(orderService);
     }
 
     @Test
