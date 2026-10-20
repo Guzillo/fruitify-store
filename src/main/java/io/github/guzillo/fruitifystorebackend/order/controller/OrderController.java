@@ -1,0 +1,29 @@
+package io.github.guzillo.fruitifystorebackend.order.controller;
+
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/orders")
+@RequiredArgsConstructor
+public class OrderController {
+
+    private final OrderService orderService;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrderResponseDTO createOrder(@Valid @RequestBody OrderCreateRequestDTO request,
+        Authentication authentication) {
+        return orderService.createOrder(authentication.getName(), request);
+    }
+}
