@@ -1,8 +1,10 @@
 package io.github.guzillo.fruitifystorebackend.cart.service;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockException;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
 import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
@@ -54,7 +56,29 @@ public class CartService {
         CartItem cartItem = cartItemRepository
             .findByCartIdAndProductId(cart.getId(), product.getId())
             .orElseGet(() -> createCartItem(cart, product));
-        cartItem.setQuantity(cartItem.getQuantity() + request.quantity());
+        int newQuantity = cartItem.getQuantity() + request.quantity();
+        if (newQuantity > product.getStockQuantity()) {
+            throw new InsufficientStockException(product.getId(), product.getStockQuantity());
+        }
+        cartItem.setQuantity(newQuantity);
+
+        return toItemResponse(cartItemRepository.save(cartItem));
+    }
+
+    @Transactional
+    public CartItemResponseDTO updateItemQuantity(String email, Long itemId,
+        CartItemUpdateRequestDTO request) {
+        User user = findUserByEmail(email);
+        CartItem cartItem = cartItemRepository.findByIdAndCartUserId(itemId, user.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("CartItem", itemId));
+        Product product = cartItem.getProduct();
+        if (!Boolean.TRUE.equals(product.getIsActive())) {
+            throw new ProductNotActiveException(product.getId());
+        }
+        if (request.quantity() > product.getStockQuantity()) {
+            throw new InsufficientStockException(product.getId(), product.getStockQuantity());
+        }
+        cartItem.setQuantity(request.quantity());
 
         return toItemResponse(cartItemRepository.save(cartItem));
     }

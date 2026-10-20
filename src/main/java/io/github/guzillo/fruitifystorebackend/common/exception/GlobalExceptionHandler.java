@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.common.exception;
 
 import io.github.guzillo.fruitifystorebackend.auth.exception.EmailAlreadyRegisteredException;
 import io.github.guzillo.fruitifystorebackend.auth.exception.InvalidTokenException;
+import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockException;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
@@ -48,6 +49,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ProductAlreadyExistsException.class)
     public ResponseEntity<Object> handleProductAlreadyExistsException(
         ProductAlreadyExistsException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Object> handleInsufficientStockException(
+        InsufficientStockException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
     }

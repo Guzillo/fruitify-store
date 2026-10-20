@@ -7,13 +7,16 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockException;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.service.CartService;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
@@ -162,5 +165,75 @@ class CartControllerTest {
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldUpdateCartItemQuantityForAuthenticatedUser() throws Exception {
+        when(cartService.updateItemQuantity(any(), any(), any())).thenReturn(
+            new CartItemResponseDTO(50L, 100L, "Apple", new BigDecimal("2.49"), 5));
+
+        mockMvc.perform(put("/api/cart/items/50")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"quantity": 5}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(50))
+            .andExpect(jsonPath("$.quantity").value(5));
+
+        verify(cartService).updateItemQuantity("user@example.com", 50L,
+            new CartItemUpdateRequestDTO(5));
+    }
+
+    @Test
+    void shouldRejectUpdateWithNonPositiveQuantity() throws Exception {
+        mockMvc.perform(put("/api/cart/items/50")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"quantity": 0}
+                    """))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenCartItemDoesNotExist() throws Exception {
+        when(cartService.updateItemQuantity(any(), any(), any()))
+            .thenThrow(new ResourceNotFoundException("CartItem", 50L));
+
+        mockMvc.perform(put("/api/cart/items/50")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"quantity": 5}
+                    """))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedUpdate() throws Exception {
+        mockMvc.perform(put("/api/cart/items/50")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"quantity": 5}
+                    """))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void shouldReturnConflictWhenQuantityExceedsStock() throws Exception {
+        when(cartService.addItem(any(), any()))
+            .thenThrow(new InsufficientStockException(100L, 25));
+
+        mockMvc.perform(post("/api/cart/items")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(VALID_BODY))
+            .andExpect(status().isConflict());
     }
 }

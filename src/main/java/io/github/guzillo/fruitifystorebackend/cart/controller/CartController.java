@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.cart.controller;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
 import io.github.guzillo.fruitifystorebackend.cart.service.CartService;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,5 +35,12 @@ public class CartController {
     public CartItemResponseDTO addItem(@Valid @RequestBody CartItemCreateRequestDTO request,
         Authentication authentication) {
         return cartService.addItem(authentication.getName(), request);
+    }
+
+    @PutMapping("/items/{itemId}")
+    public CartItemResponseDTO updateItemQuantity(@PathVariable Long itemId,
+        @Valid @RequestBody CartItemUpdateRequestDTO request,
+        Authentication authentication) {
+        return cartService.updateItemQuantity(authentication.getName(), itemId, request);
     }
 }

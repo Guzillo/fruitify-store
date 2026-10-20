@@ -9,7 +9,9 @@ import static org.mockito.Mockito.when;
 
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.dto.CartItemUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.cart.dto.CartResponseDTO;
+import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockException;
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.cart.model.Cart;
 import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
@@ -69,6 +71,7 @@ class CartServiceTest {
         activeProduct.setName("Apple");
         activeProduct.setPrice(new BigDecimal("2.49"));
         activeProduct.setIsActive(true);
+        activeProduct.setStockQuantity(25);
         setId(activeProduct, 100L);
     }
 
@@ -219,6 +222,147 @@ class CartServiceTest {
             .isInstanceOf(AuthenticatedUserNotFoundException.class);
 
         verify(cartRepository, never()).findWithItemsByUserId(any());
+    }
+
+    @Test
+    void shouldUpdateQuantityOfOwnCartItem() {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProduct(activeProduct);
+        item.setQuantity(3);
+        setId(item, 50L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.of(item));
+        when(cartItemRepository.save(item)).thenReturn(item);
+
+        CartItemResponseDTO response = cartService.updateItemQuantity(EMAIL, 50L,
+            new CartItemUpdateRequestDTO(5));
+
+        assertThat(response).isEqualTo(
+            new CartItemResponseDTO(50L, 100L, "Apple", new BigDecimal("2.49"), 5));
+        assertThat(item.getQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    void shouldThrowWhenProductInCartIsInactiveOnUpdate() {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProduct(activeProduct);
+        item.setQuantity(3);
+        setId(item, 50L);
+        activeProduct.setIsActive(false);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() -> cartService.updateItemQuantity(EMAIL, 50L,
+            new CartItemUpdateRequestDTO(5)))
+            .isInstanceOf(ProductNotActiveException.class);
+
+        assertThat(item.getQuantity()).isEqualTo(3);
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldAllowAddingUpToExactStock() {
+        CartItem existing = new CartItem();
+        existing.setCart(cart);
+        existing.setProduct(activeProduct);
+        existing.setQuantity(20);
+        setId(existing, 50L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(productRepository.findById(100L)).thenReturn(Optional.of(activeProduct));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartIdAndProductId(10L, 100L))
+            .thenReturn(Optional.of(existing));
+        when(cartItemRepository.save(existing)).thenReturn(existing);
+
+        CartItemResponseDTO response = cartService.addItem(EMAIL,
+            new CartItemCreateRequestDTO(100L, 5));
+
+        assertThat(response.quantity()).isEqualTo(25);
+    }
+
+    @Test
+    void shouldThrowWhenAddingMoreThanStockForNewItem() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(productRepository.findById(100L)).thenReturn(Optional.of(activeProduct));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartIdAndProductId(10L, 100L))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.addItem(EMAIL,
+            new CartItemCreateRequestDTO(100L, 26)))
+            .isInstanceOf(InsufficientStockException.class);
+
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldThrowWhenMergedQuantityExceedsStock() {
+        CartItem existing = new CartItem();
+        existing.setCart(cart);
+        existing.setProduct(activeProduct);
+        existing.setQuantity(20);
+        setId(existing, 50L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(productRepository.findById(100L)).thenReturn(Optional.of(activeProduct));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartIdAndProductId(10L, 100L))
+            .thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> cartService.addItem(EMAIL,
+            new CartItemCreateRequestDTO(100L, 6)))
+            .isInstanceOf(InsufficientStockException.class);
+
+        assertThat(existing.getQuantity()).isEqualTo(20);
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedQuantityExceedsStock() {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProduct(activeProduct);
+        item.setQuantity(3);
+        setId(item, 50L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() -> cartService.updateItemQuantity(EMAIL, 50L,
+            new CartItemUpdateRequestDTO(26)))
+            .isInstanceOf(InsufficientStockException.class);
+
+        assertThat(item.getQuantity()).isEqualTo(3);
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldThrowWhenCartItemDoesNotBelongToUser() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.updateItemQuantity(EMAIL, 50L,
+            new CartItemUpdateRequestDTO(5)))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("CartItem");
+
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnUpdate() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.updateItemQuantity(EMAIL, 50L,
+            new CartItemUpdateRequestDTO(5)))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(cartItemRepository, never()).findByIdAndCartUserId(any(), any());
     }
 
     private static void setId(Object entity, Long id) {
