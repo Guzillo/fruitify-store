@@ -14,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,5 +44,11 @@ public class OrderController {
     public OrderResponseDTO createOrder(@Valid @RequestBody OrderCreateRequestDTO request,
         Authentication authentication) {
         return orderService.createOrder(authentication.getName(), request);
+    }
+
+    @GetMapping("/{orderId}")
+    public OrderResponseDTO findOrder(@PathVariable Long orderId,
+        Authentication authentication) {
+        return orderService.findOrder(authentication.getName(), orderId);
     }
 }

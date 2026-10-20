@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockException;
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
+import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
@@ -188,6 +189,42 @@ class OrderControllerTest {
     @Test
     void shouldRejectUnauthenticatedGetOrders() throws Exception {
         mockMvc.perform(get("/api/orders"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void shouldReturnOrderDetailsForOwner() throws Exception {
+        when(orderService.findOrder(any(), any())).thenReturn(new OrderResponseDTO(
+            200L, "ORD-0123456789AB", OrderStatus.PENDING, new BigDecimal("7.47"),
+            new ShippingAddressDTO("Jan Kowalski", "Marszałkowska 1", "Warsaw", "00-001", "PL"),
+            List.of(new OrderItemResponseDTO(100L, "Apple", new BigDecimal("2.49"), 3)),
+            null));
+
+        mockMvc.perform(get("/api/orders/200")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(200))
+            .andExpect(jsonPath("$.items[0].productName").value("Apple"))
+            .andExpect(jsonPath("$.shippingAddress.city").value("Warsaw"));
+
+        verify(orderService).findOrder("user@example.com", 200L);
+    }
+
+    @Test
+    void shouldReturnNotFoundForOrderOfAnotherUser() throws Exception {
+        when(orderService.findOrder(any(), any()))
+            .thenThrow(new ResourceNotFoundException("Order", 200L));
+
+        mockMvc.perform(get("/api/orders/200")
+                .with(jwt()))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedGetOrder() throws Exception {
+        mockMvc.perform(get("/api/orders/200"))
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(orderService);

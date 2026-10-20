@@ -59,6 +59,15 @@ public class OrderService {
             page.getTotalPages());
     }
 
+    @Transactional(readOnly = true)
+    public OrderResponseDTO findOrder(String email, Long orderId) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));
+        Order order = orderRepository.findWithItemsByIdAndUserId(orderId, user.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        return orderMapper.toResponse(order);
+    }
+
     @Transactional
     public OrderResponseDTO createOrder(String email, OrderCreateRequestDTO request) {
         User user = userRepository.findByEmail(email)

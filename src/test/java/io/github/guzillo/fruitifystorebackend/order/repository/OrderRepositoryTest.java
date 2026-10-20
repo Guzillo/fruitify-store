@@ -135,4 +135,27 @@ class OrderRepositoryTest {
         assertThat(page.getTotalElements()).isEqualTo(1);
         assertThat(page.getContent().get(0).getOrderNumber()).isEqualTo(ownOrderNumber);
     }
+
+    @Test
+    void shouldFindOrderWithItemsOnlyForItsOwner() {
+        User owner = userRepository.saveAndFlush(
+            new User("order-" + UUID.randomUUID() + "@example.com", "password",
+                new LinkedHashSet<>()));
+        User other = userRepository.saveAndFlush(
+            new User("order-" + UUID.randomUUID() + "@example.com", "password",
+                new LinkedHashSet<>()));
+        Product product = createProduct();
+        Order order = newOrder(newOrderNumber(), owner);
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setQuantity(1);
+        item.setPriceAtPurchase(new BigDecimal("2.49"));
+        order.getOrderItems().add(item);
+        Long id = orderRepository.saveAndFlush(order).getId();
+
+        Order found = orderRepository.findWithItemsByIdAndUserId(id, owner.getId()).orElseThrow();
+        assertThat(found.getOrderItems()).hasSize(1);
+        assertThat(orderRepository.findWithItemsByIdAndUserId(id, other.getId())).isEmpty();
+    }
 }

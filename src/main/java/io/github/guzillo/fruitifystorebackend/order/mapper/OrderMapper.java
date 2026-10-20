@@ -5,7 +5,9 @@ import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
+import io.github.guzillo.fruitifystorebackend.order.model.OrderItem;
 import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
+import java.util.Comparator;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,6 +37,7 @@ public class OrderMapper {
                 address.getPostalCode(),
                 address.getCountry()),
             order.getOrderItems().stream()
+                .sorted(Comparator.comparing(OrderItem::getId))
                 .map(item -> new OrderItemResponseDTO(
                     item.getProduct().getId(),
                     item.getProduct().getName(),

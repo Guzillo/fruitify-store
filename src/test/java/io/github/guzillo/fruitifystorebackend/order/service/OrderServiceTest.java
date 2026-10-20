@@ -22,6 +22,7 @@ import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
+import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
 import io.github.guzillo.fruitifystorebackend.order.repository.OrderRepository;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
@@ -185,6 +186,50 @@ class OrderServiceTest {
             .isInstanceOf(AuthenticatedUserNotFoundException.class);
 
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldReturnOrderWithItemsForOwner() {
+        Order order = new Order();
+        order.setOrderNumber("ORD-ABCDEF123456");
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(new BigDecimal("7.47"));
+        order.setShippingAddress(new ShippingAddress());
+        order.getShippingAddress().setRecipientName("Jan Kowalski");
+        order.getShippingAddress().setStreet("Marszałkowska 1");
+        order.getShippingAddress().setCity("Warsaw");
+        order.getShippingAddress().setPostalCode("00-001");
+        order.getShippingAddress().setCountry("PL");
+        setId(order, 200L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(orderRepository.findWithItemsByIdAndUserId(200L, 1L)).thenReturn(Optional.of(order));
+
+        OrderResponseDTO response = orderService.findOrder(EMAIL, 200L);
+
+        assertThat(response.id()).isEqualTo(200L);
+        assertThat(response.orderNumber()).isEqualTo("ORD-ABCDEF123456");
+        assertThat(response.shippingAddress().city()).isEqualTo("Warsaw");
+    }
+
+    @Test
+    void shouldThrowWhenOrderDoesNotExistOrBelongsToAnotherUser() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(orderRepository.findWithItemsByIdAndUserId(200L, 1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.findOrder(EMAIL, 200L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("Order");
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnFindOrder() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.findOrder(EMAIL, 200L))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(orderRepository, never()).findWithItemsByIdAndUserId(any(), any());
     }
 
     private void stubCartWith(List<CartItem> items, List<Product> lockedProducts) {
