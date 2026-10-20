@@ -8,6 +8,8 @@ import io.github.guzillo.fruitifystorebackend.cart.repository.CartItemRepository
 import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderPageResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
@@ -52,6 +54,18 @@ public class OrderService {
         Page<OrderSummaryDTO> page = orderRepository.findByUserId(user.getId(), pageable)
             .map(orderMapper::toSummary);
         return new OrderPageResponseDTO(
+            page.getContent(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages());
+    }
+
+    @Transactional(readOnly = true)
+    public AdminOrderPageResponseDTO findAllOrders(Pageable pageable) {
+        Page<AdminOrderSummaryDTO> page = orderRepository.findAll(pageable)
+            .map(orderMapper::toAdminSummary);
+        return new AdminOrderPageResponseDTO(
             page.getContent(),
             page.getNumber(),
             page.getSize(),

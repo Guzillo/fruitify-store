@@ -14,6 +14,7 @@ import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
 import io.github.guzillo.fruitifystorebackend.cart.repository.CartItemRepository;
 import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
+import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
@@ -230,6 +231,27 @@ class OrderServiceTest {
             .isInstanceOf(AuthenticatedUserNotFoundException.class);
 
         verify(orderRepository, never()).findWithItemsByIdAndUserId(any(), any());
+    }
+
+    @Test
+    void shouldReturnAllOrdersWithCustomerEmailForAdmin() {
+        Order order = new Order();
+        order.setOrderNumber("ORD-ABCDEF123456");
+        order.setStatus(OrderStatus.PAID);
+        order.setTotalAmount(new BigDecimal("7.47"));
+        order.setUser(user);
+        setId(order, 200L);
+
+        when(orderRepository.findAll(PageRequest.of(0, 10)))
+            .thenReturn(new PageImpl<>(List.of(order), PageRequest.of(0, 10), 1));
+
+        AdminOrderPageResponseDTO page = orderService.findAllOrders(PageRequest.of(0, 10));
+
+        assertThat(page.content()).hasSize(1);
+        assertThat(page.content().get(0).customerEmail()).isEqualTo(EMAIL);
+        assertThat(page.content().get(0).userId()).isEqualTo(1L);
+        assertThat(page.content().get(0).status()).isEqualTo(OrderStatus.PAID);
+        assertThat(page.totalElements()).isEqualTo(1);
     }
 
     private void stubCartWith(List<CartItem> items, List<Product> lockedProducts) {

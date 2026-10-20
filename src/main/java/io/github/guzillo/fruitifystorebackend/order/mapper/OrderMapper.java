@@ -1,5 +1,6 @@
 package io.github.guzillo.fruitifystorebackend.order.mapper;
 
+import io.github.guzillo.fruitifystorebackend.order.dto.AdminOrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
@@ -54,5 +55,16 @@ public class OrderMapper {
             order.getStatus(),
             order.getTotalAmount(),
             order.getCreatedAt());
+    }
+
+    public AdminOrderSummaryDTO toAdminSummary(Order order) {
+        return new AdminOrderSummaryDTO(
+            order.getId(),
+            order.getOrderNumber(),
+            order.getStatus(),
+            order.getTotalAmount(),
+            order.getCreatedAt(),
+            order.getUser().getId(),
+            order.getUser().getEmail());
     }
 }
