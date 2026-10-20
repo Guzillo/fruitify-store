@@ -380,6 +380,37 @@ class CartServiceTest {
     }
 
     @Test
+    void shouldRemoveAllItemsFromCartButKeepCart() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+        cartService.clearCart(EMAIL);
+
+        verify(cartItemRepository).deleteByCartId(10L);
+        verify(cartRepository, never()).delete(any(Cart.class));
+    }
+
+    @Test
+    void shouldDoNothingWhenUserHasNoCart() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        cartService.clearCart(EMAIL);
+
+        verify(cartItemRepository, never()).deleteByCartId(any());
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnClear() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.clearCart(EMAIL))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(cartItemRepository, never()).deleteByCartId(any());
+    }
+
+    @Test
     void shouldThrowWhenCartItemDoesNotBelongToUser() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(cartItemRepository.findByIdAndCartUserId(50L, 1L)).thenReturn(Optional.empty());

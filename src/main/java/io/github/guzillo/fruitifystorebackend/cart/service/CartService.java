@@ -91,6 +91,13 @@ public class CartService {
         cartItemRepository.delete(cartItem);
     }
 
+    @Transactional
+    public void clearCart(String email) {
+        User user = findUserByEmail(email);
+        cartRepository.findByUserId(user.getId())
+            .ifPresent(cart -> cartItemRepository.deleteByCartId(cart.getId()));
+    }
+
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));

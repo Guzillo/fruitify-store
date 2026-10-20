@@ -265,4 +265,21 @@ class CartControllerTest {
 
         verifyNoInteractions(cartService);
     }
+
+    @Test
+    void shouldClearCartForAuthenticatedUser() throws Exception {
+        mockMvc.perform(delete("/api/cart")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com"))))
+            .andExpect(status().isNoContent());
+
+        verify(cartService).clearCart("user@example.com");
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedClearCart() throws Exception {
+        mockMvc.perform(delete("/api/cart"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(cartService);
+    }
 }

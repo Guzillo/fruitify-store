@@ -50,4 +50,10 @@ public class CartController {
     public void deleteItem(@PathVariable Long itemId, Authentication authentication) {
         cartService.deleteItem(authentication.getName(), itemId);
     }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void clearCart(Authentication authentication) {
+        cartService.clearCart(authentication.getName());
+    }
 }
