@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -115,5 +116,23 @@ class OrderRepositoryTest {
         product.setIsActive(true);
         product.setCategory(category);
         return productRepository.saveAndFlush(product);
+    }
+
+    @Test
+    void shouldFindOnlyOrdersOfGivenUser() {
+        User owner = userRepository.saveAndFlush(
+            new User("order-" + UUID.randomUUID() + "@example.com", "password",
+                new LinkedHashSet<>()));
+        User other = userRepository.saveAndFlush(
+            new User("order-" + UUID.randomUUID() + "@example.com", "password",
+                new LinkedHashSet<>()));
+        String ownOrderNumber = newOrderNumber();
+        orderRepository.saveAndFlush(newOrder(ownOrderNumber, owner));
+        orderRepository.saveAndFlush(newOrder(newOrderNumber(), other));
+
+        var page = orderRepository.findByUserId(owner.getId(), PageRequest.of(0, 10));
+
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent().get(0).getOrderNumber()).isEqualTo(ownOrderNumber);
     }
 }

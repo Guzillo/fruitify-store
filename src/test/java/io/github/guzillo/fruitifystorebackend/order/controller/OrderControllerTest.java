@@ -1,10 +1,13 @@
 package io.github.guzillo.fruitifystorebackend.order.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,6 +16,8 @@ import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockEx
 import io.github.guzillo.fruitifystorebackend.common.exception.GlobalExceptionHandler;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
@@ -22,7 +27,10 @@ import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
 import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
 import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -125,6 +133,35 @@ class OrderControllerTest {
         mockMvc.perform(post("/api/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(VALID_BODY))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void shouldReturnOrdersPageNewestFirstByDefault() throws Exception {
+        when(orderService.findOrders(any(), any())).thenReturn(new OrderPageResponseDTO(
+            List.of(new OrderSummaryDTO(200L, "ORD-0123456789AB", OrderStatus.PENDING,
+                new BigDecimal("7.47"), Instant.parse("2026-10-20T10:00:00Z"))),
+            0, 20, 1, 1));
+
+        mockMvc.perform(get("/api/orders")
+                .with(jwt().jwt(jwt -> jwt.subject("user@example.com"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].orderNumber").value("ORD-0123456789AB"))
+            .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.number").value(0));
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(orderService).findOrders(eq("user@example.com"), pageable.capture());
+        assertThat(pageable.getValue().getSort().getOrderFor("createdAt").isDescending())
+            .isTrue();
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedGetOrders() throws Exception {
+        mockMvc.perform(get("/api/orders"))
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(orderService);

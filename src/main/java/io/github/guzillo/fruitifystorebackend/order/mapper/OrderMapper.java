@@ -2,6 +2,7 @@ package io.github.guzillo.fruitifystorebackend.order.mapper;
 
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
@@ -40,6 +41,15 @@ public class OrderMapper {
                     item.getPriceAtPurchase(),
                     item.getQuantity()))
                 .toList(),
+            order.getCreatedAt());
+    }
+
+    public OrderSummaryDTO toSummary(Order order) {
+        return new OrderSummaryDTO(
+            order.getId(),
+            order.getOrderNumber(),
+            order.getStatus(),
+            order.getTotalAmount(),
             order.getCreatedAt());
     }
 }

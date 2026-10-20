@@ -15,6 +15,7 @@ import io.github.guzillo.fruitifystorebackend.cart.repository.CartItemRepository
 import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
@@ -37,6 +38,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -204,5 +207,36 @@ class OrderServiceTest {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    void shouldReturnPageOfOrderSummariesForUser() {
+        Order order = new Order();
+        order.setOrderNumber("ORD-ABCDEF123456");
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(new BigDecimal("7.47"));
+        setId(order, 200L);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(orderRepository.findByUserId(1L, PageRequest.of(0, 10)))
+            .thenReturn(new PageImpl<>(List.of(order), PageRequest.of(0, 10), 1));
+
+        OrderPageResponseDTO page = orderService.findOrders(EMAIL, PageRequest.of(0, 10));
+
+        assertThat(page.content()).hasSize(1);
+        assertThat(page.content().getFirst().orderNumber()).isEqualTo("ORD-ABCDEF123456");
+        assertThat(page.totalElements()).isEqualTo(1);
+        assertThat(page.number()).isZero();
+        assertThat(page.size()).isEqualTo(10);
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedUserDoesNotExistOnFindOrders() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.findOrders(EMAIL, PageRequest.of(0, 10)))
+            .isInstanceOf(AuthenticatedUserNotFoundException.class);
+
+        verify(orderRepository, never()).findByUserId(any(), any());
     }
 }

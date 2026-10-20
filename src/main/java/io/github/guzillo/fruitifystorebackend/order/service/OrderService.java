@@ -8,7 +8,9 @@ import io.github.guzillo.fruitifystorebackend.cart.repository.CartItemRepository
 import io.github.guzillo.fruitifystorebackend.cart.repository.CartRepository;
 import io.github.guzillo.fruitifystorebackend.common.exception.ResourceNotFoundException;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
@@ -27,6 +29,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,20 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
+
+    @Transactional(readOnly = true)
+    public OrderPageResponseDTO findOrders(String email, Pageable pageable) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new AuthenticatedUserNotFoundException(email));
+        Page<OrderSummaryDTO> page = orderRepository.findByUserId(user.getId(), pageable)
+            .map(orderMapper::toSummary);
+        return new OrderPageResponseDTO(
+            page.getContent(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages());
+    }
 
     @Transactional
     public OrderResponseDTO createOrder(String email, OrderCreateRequestDTO request) {
