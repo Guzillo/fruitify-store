@@ -1,0 +1,45 @@
+package io.github.guzillo.fruitifystorebackend.order.mapper;
+
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
+import io.github.guzillo.fruitifystorebackend.order.model.Order;
+import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
+import org.springframework.stereotype.Component;
+
+@Component
+public class OrderMapper {
+
+    public ShippingAddress toEntity(ShippingAddressDTO dto) {
+        ShippingAddress address = new ShippingAddress();
+        address.setRecipientName(dto.recipientName());
+        address.setStreet(dto.street());
+        address.setCity(dto.city());
+        address.setPostalCode(dto.postalCode());
+        address.setCountry(dto.country());
+        return address;
+    }
+
+    public OrderResponseDTO toResponse(Order order) {
+        ShippingAddress address = order.getShippingAddress();
+        return new OrderResponseDTO(
+            order.getId(),
+            order.getOrderNumber(),
+            order.getStatus(),
+            order.getTotalAmount(),
+            new ShippingAddressDTO(
+                address.getRecipientName(),
+                address.getStreet(),
+                address.getCity(),
+                address.getPostalCode(),
+                address.getCountry()),
+            order.getOrderItems().stream()
+                .map(item -> new OrderItemResponseDTO(
+                    item.getProduct().getId(),
+                    item.getProduct().getName(),
+                    item.getPriceAtPurchase(),
+                    item.getQuantity()))
+                .toList(),
+            order.getCreatedAt());
+    }
+}
