@@ -15,6 +15,7 @@ import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
+import io.github.guzillo.fruitifystorebackend.support.AbstractIntegrationTest;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.math.BigDecimal;
@@ -22,12 +23,10 @@ import java.util.LinkedHashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @Transactional
-class OrderServiceIntegrationTest {
+class OrderServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private OrderService orderService;

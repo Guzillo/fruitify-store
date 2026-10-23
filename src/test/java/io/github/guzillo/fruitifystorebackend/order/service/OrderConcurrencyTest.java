@@ -15,6 +15,7 @@ import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.repository.OrderRepository;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
+import io.github.guzillo.fruitifystorebackend.support.AbstractIntegrationTest;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.math.BigDecimal;
@@ -32,14 +33,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Runs real transactions on separate threads, so it is intentionally not @Transactional.
  * Test data is committed and removed in {@link #cleanUp()}.
  */
-@SpringBootTest
-class OrderConcurrencyTest {
+class OrderConcurrencyTest extends AbstractIntegrationTest {
 
     @Autowired
     private OrderService orderService;

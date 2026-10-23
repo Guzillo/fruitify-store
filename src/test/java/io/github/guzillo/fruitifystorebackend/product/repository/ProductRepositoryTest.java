@@ -6,19 +6,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.github.guzillo.fruitifystorebackend.category.Category;
 import io.github.guzillo.fruitifystorebackend.category.CategoryRepository;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
+import io.github.guzillo.fruitifystorebackend.support.AbstractIntegrationTest;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @Transactional
 @Sql(statements = "TRUNCATE TABLE products, categories RESTART IDENTITY CASCADE",
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class ProductRepositoryTest {
+class ProductRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;

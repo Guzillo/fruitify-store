@@ -3,17 +3,16 @@ package io.github.guzillo.fruitifystorebackend.auth.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.guzillo.fruitifystorebackend.auth.model.RefreshToken;
+import io.github.guzillo.fruitifystorebackend.support.AbstractIntegrationTest;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @Transactional
-class RefreshTokenRepositoryTest {
+class RefreshTokenRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;

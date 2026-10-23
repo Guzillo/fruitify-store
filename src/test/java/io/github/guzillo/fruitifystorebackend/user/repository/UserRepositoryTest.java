@@ -6,16 +6,15 @@ import io.github.guzillo.fruitifystorebackend.security.model.Privilege;
 import io.github.guzillo.fruitifystorebackend.security.model.Role;
 import io.github.guzillo.fruitifystorebackend.security.repository.PrivilegeRepository;
 import io.github.guzillo.fruitifystorebackend.security.repository.RoleRepository;
+import io.github.guzillo.fruitifystorebackend.support.AbstractIntegrationTest;
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @Transactional
-class UserRepositoryTest {
+class UserRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
