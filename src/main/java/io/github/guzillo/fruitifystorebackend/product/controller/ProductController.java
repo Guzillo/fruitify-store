@@ -6,6 +6,10 @@ import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDT
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Products",
+    description = "Product catalog. Reads are public, writes require the ADMIN role.")
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -37,6 +43,9 @@ public class ProductController {
 
     private final ProductService productService;
 
+    @Operation(summary = "List products",
+        description = "Paginated product list. Inactive products are returned only to ADMIN users. "
+            + "Allowed sort properties: id, name, price, stockQuantity.")
     @GetMapping
     public ProductPageResponseDTO getProducts(
         @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC)
@@ -52,12 +61,18 @@ public class ProductController {
             products.getTotalPages());
     }
 
+    @Operation(summary = "Get product",
+        description = "Inactive products are visible only to ADMIN users.")
     @GetMapping("/{productId}")
     public ProductResponseDTO getProduct(@PathVariable Long productId,
         Authentication authentication) {
         return productService.findProduct(productId, isAdmin(authentication));
     }
 
+    @Operation(summary = "Create product", description = "Requires the ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "201", description = "Product created")
+    @ApiResponse(responseCode = "409", description = "Product already exists")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -65,6 +80,10 @@ public class ProductController {
         return productService.createProduct(request);
     }
 
+    @Operation(summary = "Update product", description = "Requires the ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Product updated")
+    @ApiResponse(responseCode = "404", description = "Product or category not found")
     @PutMapping("/{productId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ProductResponseDTO updateProduct(@PathVariable Long productId,
@@ -72,6 +91,9 @@ public class ProductController {
         return productService.updateProduct(productId, request);
     }
 
+    @Operation(summary = "Delete product", description = "Requires the ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "204", description = "Product deleted")
     @DeleteMapping("/{productId}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

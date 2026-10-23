@@ -5,6 +5,10 @@ import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Orders", description = "Orders belonging to the authenticated user")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -30,6 +36,9 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    @Operation(summary = "List my orders",
+        description = "Paginated list of the current user's orders. "
+            + "Allowed sort properties: createdAt, totalAmount.")
     @GetMapping
     public OrderPageResponseDTO findOrders(
         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -39,6 +48,11 @@ public class OrderController {
         return orderService.findOrders(authentication.getName(), pageable);
     }
 
+    @Operation(summary = "Create order from cart",
+        description = "Creates a PENDING order from the current cart, decreases product stock "
+            + "and clears the cart.")
+    @ApiResponse(responseCode = "201", description = "Order created")
+    @ApiResponse(responseCode = "409", description = "Empty cart, inactive product or insufficient stock")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public OrderResponseDTO createOrder(@Valid @RequestBody OrderCreateRequestDTO request,
@@ -46,6 +60,9 @@ public class OrderController {
         return orderService.createOrder(authentication.getName(), request);
     }
 
+    @Operation(summary = "Get my order")
+    @ApiResponse(responseCode = "200", description = "Order found")
+    @ApiResponse(responseCode = "404", description = "Order not found")
     @GetMapping("/{orderId}")
     public OrderResponseDTO findOrder(@PathVariable Long orderId,
         Authentication authentication) {

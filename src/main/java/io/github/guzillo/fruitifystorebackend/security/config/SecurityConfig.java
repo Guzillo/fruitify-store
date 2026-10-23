@@ -56,6 +56,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                     .requestMatchers("/api/payments/webhook").permitAll()
+                    .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+                    .permitAll()
                     .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                 jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
