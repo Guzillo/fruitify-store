@@ -7,8 +7,10 @@ import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveExc
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotPayableException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
 import io.github.guzillo.fruitifystorebackend.payment.error.CheckoutSessionCreationException;
+import io.github.guzillo.fruitifystorebackend.payment.error.WebhookSignatureException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.common.exception.InvalidSortPropertyException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
@@ -61,6 +63,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidOrderStatusTransitionException.class)
     public ResponseEntity<Object> handleInvalidOrderStatusTransitionException(
         InvalidOrderStatusTransitionException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(OrderNotPayableException.class)
+    public ResponseEntity<Object> handleOrderNotPayableException(
+        OrderNotPayableException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
@@ -136,6 +146,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             "Payment provider is currently unavailable",
             new HttpHeaders(),
             HttpStatus.SERVICE_UNAVAILABLE,
+            request
+        );
+    }
+
+    @ExceptionHandler(WebhookSignatureException.class)
+    public ResponseEntity<Object> handleWebhookSignatureException(
+        WebhookSignatureException ex, WebRequest request
+    ) {
+        return super.handleExceptionInternal(
+            ex,
+            "Your signature for this webhook is invalid",
+            new HttpHeaders(),
+            HttpStatus.BAD_REQUEST,
             request
         );
     }

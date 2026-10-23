@@ -66,6 +66,9 @@ public class OrderService {
     public OrderResponseDTO changeStatus(Long orderId, OrderStatus target) {
         Order order = orderRepository.findByIdForUpdate(orderId)
             .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        if (order.getStatus() == target) {
+            return orderMapper.toResponse(order);
+        }
         if (!order.getStatus().canTransitionTo(target)) {
             throw new InvalidOrderStatusTransitionException(order.getStatus(), target);
         }

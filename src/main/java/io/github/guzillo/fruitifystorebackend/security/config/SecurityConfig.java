@@ -55,6 +55,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+                    .requestMatchers("/api/payments/webhook").permitAll()
                     .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                 jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
