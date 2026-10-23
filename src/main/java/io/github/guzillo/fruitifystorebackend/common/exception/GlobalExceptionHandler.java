@@ -8,6 +8,7 @@ import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlready
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
+import io.github.guzillo.fruitifystorebackend.payment.error.CheckoutSessionCreationException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.common.exception.InvalidSortPropertyException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
@@ -124,5 +125,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ResourceNotFoundException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+    }
+
+    @ExceptionHandler(CheckoutSessionCreationException.class)
+    public ResponseEntity<Object> handleCheckoutSessionCreationException(
+        CheckoutSessionCreationException ex, WebRequest request
+    ) {
+        return super.handleExceptionInternal(
+            ex,
+            "Payment provider is currently unavailable",
+            new HttpHeaders(),
+            HttpStatus.SERVICE_UNAVAILABLE,
+            request
+        );
     }
 }
