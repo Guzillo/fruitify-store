@@ -32,5 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 
-src/main/resources/certs/
-
+backend/src/main/resources/certs/
