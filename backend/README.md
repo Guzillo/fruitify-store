@@ -35,6 +35,8 @@ administrative order management and Stripe Checkout payments.
 
 ## Quick start
 
+Run the commands in this section from the `backend/` directory:
+
 ### Prerequisites
 
 - JDK 25
