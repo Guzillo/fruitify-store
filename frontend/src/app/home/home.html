@@ -1,0 +1,46 @@
+<h1>Our fruits</h1>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+@if (loading()) {
+  <p class="status">Loading products…</p>
+}
+
+<div class="grid">
+  @for (product of products(); track product.id) {
+    <article class="card">
+      <img [src]="product.imageUrl" [alt]="product.name" />
+      <div class="card-body">
+        <span class="category">{{ product.category.name }}</span>
+        <h2>{{ product.name }}</h2>
+        <p class="description">{{ product.description }}</p>
+        <div class="card-footer">
+          <strong>{{ product.price | currency: 'PLN' }}</strong>
+          @if (product.stockQuantity > 0) {
+            <span class="in-stock">In stock</span>
+          } @else {
+            <span class="out-of-stock">Out of stock</span>
+          }
+        </div>
+      </div>
+    </article>
+  } @empty {
+    @if (!loading() && !error()) {
+      <p class="status">No products yet.</p>
+    }
+  }
+</div>
+
+@if (totalPages() > 1) {
+  <nav class="pagination">
+    <button type="button" (click)="previousPage()" [disabled]="currentPage() === 0">
+      Previous
+    </button>
+    <span>Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+    <button type="button" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">
+      Next
+    </button>
+  </nav>
+}

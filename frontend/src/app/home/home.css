@@ -1,0 +1,98 @@
+h1 {
+  margin-bottom: 1.5rem;
+}
+
+.status {
+  color: #666;
+}
+
+.error {
+  color: #c62828;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #f4f4f4;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem;
+}
+
+.category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #2e7d32;
+  letter-spacing: 0.05em;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.description {
+  margin: 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.in-stock {
+  color: #2e7d32;
+  font-size: 0.85rem;
+}
+
+.out-of-stock {
+  color: #c62828;
+  font-size: 0.85rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background: #fff;
+  color: #2e7d32;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
