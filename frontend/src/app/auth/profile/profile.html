@@ -1,18 +1,70 @@
 <section class="profile">
   <h1>My profile</h1>
 
-  @if (auth.currentUser(); as user) {
-    <dl>
-      <dt>Email</dt>
-      <dd>{{ user.email }}</dd>
+  @if (auth.currentUser()) {
+    <form class="block" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+      <h2>Personal details</h2>
 
-      <dt>First name</dt>
-      <dd>{{ user.firstName || '—' }}</dd>
+      <label>
+        First name
+        <input type="text" formControlName="firstName" autocomplete="given-name" />
+      </label>
 
-      <dt>Last name</dt>
-      <dd>{{ user.lastName || '—' }}</dd>
-    </dl>
-    <button type="button" (click)="reload()" [disabled]="loading()">Refresh</button>
+      <label>
+        Last name
+        <input type="text" formControlName="lastName" autocomplete="family-name" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" formControlName="email" autocomplete="email" />
+      </label>
+      @if (profileForm.controls.email.touched && profileForm.controls.email.invalid) {
+        <p class="error">Enter a valid email address.</p>
+      }
+      @if (profileForm.controls.email.value !== auth.currentUser()?.email) {
+        <p class="hint">Changing your email logs you out so you can sign in with the new one.</p>
+      }
+
+      @if (profileMessage(); as message) {
+        <p class="success">{{ message }}</p>
+      }
+      @if (profileError(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+
+      <button type="submit" [disabled]="savingProfile()">
+        {{ savingProfile() ? 'Saving…' : 'Save changes' }}
+      </button>
+    </form>
+
+    <form class="block" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <h2>Change password</h2>
+
+      <label>
+        Current password
+        <input type="password" formControlName="currentPassword" autocomplete="current-password" />
+      </label>
+
+      <label>
+        New password
+        <input type="password" formControlName="newPassword" autocomplete="new-password" />
+      </label>
+      @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) {
+        <p class="error">New password must be at least 8 characters.</p>
+      }
+
+      @if (passwordMessage(); as message) {
+        <p class="success">{{ message }}</p>
+      }
+      @if (passwordError(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+
+      <button type="submit" [disabled]="savingPassword()">
+        {{ savingPassword() ? 'Changing…' : 'Change password' }}
+      </button>
+    </form>
   } @else if (loading()) {
     <p class="status">Loading profile…</p>
   } @else if (error(); as message) {

@@ -4,6 +4,8 @@ import { Observable, tap } from 'rxjs';
 import {
   AuthenticationResponse,
   SignupRequest,
+  UpdatePasswordRequest,
+  UpdateUserRequest,
   UserProfile,
 } from '../models/auth.model';
 
@@ -41,6 +43,16 @@ export class AuthService {
     return this.http
       .get<UserProfile>(`${API_URL}/users/me`)
       .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  updateProfile(request: UpdateUserRequest): Observable<UserProfile> {
+    return this.http
+      .put<UserProfile>(`${API_URL}/users/me`, request)
+      .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  changePassword(request: UpdatePasswordRequest): Observable<void> {
+    return this.http.put<void>(`${API_URL}/users/me/password`, request);
   }
 
   logout(): void {

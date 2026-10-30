@@ -17,3 +17,16 @@ export interface UserProfile {
   firstName: string | null;
   lastName: string | null;
 }
+
+// Mirrors user/dto/UpdateUserReqDTO. The backend ignores null fields.
+export interface UpdateUserRequest {
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+// Mirrors user/dto/UpdatePasswordReqDTO.
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
