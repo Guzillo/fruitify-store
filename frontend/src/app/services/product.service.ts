@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ProductPage } from '../models/product.model';
+import { Product, ProductPage } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -19,5 +19,9 @@ export class ProductService {
     }
 
     return this.http.get<ProductPage>(this.apiUrl, { params });
+  }
+
+  getProduct(id: number): Observable<Product> {
+    return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
 }

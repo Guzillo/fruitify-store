@@ -1,0 +1,27 @@
+<section class="product-detail">
+  <a routerLink="/" class="back">← Back to products</a>
+
+  @if (loading()) {
+    <p class="status">Loading product…</p>
+  } @else if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  } @else if (product(); as product) {
+    <article class="layout">
+      <img [src]="product.imageUrl" [alt]="product.name" />
+
+      <div class="info">
+        <span class="category">{{ product.category.name }}</span>
+        <h1>{{ product.name }}</h1>
+        <p class="description">{{ product.description }}</p>
+
+        <p class="price">{{ product.price | currency: 'PLN' }}</p>
+
+        @if (product.stockQuantity > 0) {
+          <p class="in-stock">In stock ({{ product.stockQuantity }} available)</p>
+        } @else {
+          <p class="out-of-stock">Out of stock</p>
+        }
+      </div>
+    </article>
+  }
+</section>

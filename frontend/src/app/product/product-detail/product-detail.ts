@@ -1,0 +1,49 @@
+import { CurrencyPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { EMPTY, catchError, map, switchMap, tap } from 'rxjs';
+import { Product } from '../../models/product.model';
+import { ProductService } from '../../services/product.service';
+
+@Component({
+  selector: 'app-product-detail',
+  imports: [CurrencyPipe, RouterLink],
+  templateUrl: './product-detail.html',
+  styleUrl: './product-detail.css',
+})
+export class ProductDetail implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly productService = inject(ProductService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly product = signal<Product | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
+
+  ngOnInit(): void {
+    // paramMap emits again when the URL changes, e.g. /products/1 -> /products/2.
+    this.route.paramMap.pipe(
+      map((params) => Number(params.get('id'))),
+      tap(() => {
+        this.loading.set(true);
+        this.error.set(null);
+        this.product.set(null);
+      }),
+      switchMap((id) => this.productService.getProduct(id).pipe(
+        catchError((err: HttpErrorResponse) => {
+          this.error.set(err.status === 404
+            ? 'This product does not exist.'
+            : 'Could not load this product. Please try again.');
+          this.loading.set(false);
+          return EMPTY;
+        }),
+      )),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((product) => {
+      this.product.set(product);
+      this.loading.set(false);
+    });
+  }
+}

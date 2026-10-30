@@ -51,6 +51,15 @@ h1 {
   font-size: 1.1rem;
 }
 
+.card h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card h2 a:hover {
+  text-decoration: underline;
+}
+
 .description {
   margin: 0;
   color: #555;

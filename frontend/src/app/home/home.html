@@ -33,7 +33,7 @@
       <img [src]="product.imageUrl" [alt]="product.name" />
       <div class="card-body">
         <span class="category">{{ product.category.name }}</span>
-        <h2>{{ product.name }}</h2>
+        <h2><a [routerLink]="['/products', product.id]">{{ product.name }}</a></h2>
         <p class="description">{{ product.description }}</p>
         <div class="card-footer">
           <strong>{{ product.price | currency: 'PLN' }}</strong>
