@@ -1,5 +1,6 @@
 .site-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
   background: #fff;
@@ -11,6 +12,27 @@
   font-weight: 700;
   color: #2e7d32;
   text-decoration: none;
+}
+
+.auth-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-nav a {
+  color: #2e7d32;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-nav button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background: #fff;
+  color: #2e7d32;
+  cursor: pointer;
 }
 
 .page {

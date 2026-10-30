@@ -1,0 +1,23 @@
+<section class="profile">
+  <h1>My profile</h1>
+
+  @if (auth.currentUser(); as user) {
+    <dl>
+      <dt>Email</dt>
+      <dd>{{ user.email }}</dd>
+
+      <dt>First name</dt>
+      <dd>{{ user.firstName || '—' }}</dd>
+
+      <dt>Last name</dt>
+      <dd>{{ user.lastName || '—' }}</dd>
+    </dl>
+    <button type="button" (click)="reload()" [disabled]="loading()">Refresh</button>
+  } @else if (loading()) {
+    <p class="status">Loading profile…</p>
+  } @else if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  } @else {
+    <p class="status">You need to <a routerLink="/login">log in</a> to see your profile.</p>
+  }
+</section>

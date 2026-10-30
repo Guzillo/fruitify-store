@@ -1,5 +1,15 @@
 <header class="site-header">
   <a routerLink="/" class="brand">Fruitify</a>
+
+  <nav class="auth-nav">
+    @if (auth.currentUser(); as user) {
+      <a routerLink="/profile">Hi, {{ user.firstName || user.email }}</a>
+      <button type="button" (click)="logout()">Log out</button>
+    } @else {
+      <a routerLink="/login">Log in</a>
+      <a routerLink="/register">Register</a>
+    }
+  </nav>
 </header>
 
 <main class="page">
