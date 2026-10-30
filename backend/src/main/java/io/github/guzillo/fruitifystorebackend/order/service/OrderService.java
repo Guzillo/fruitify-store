@@ -15,6 +15,7 @@ import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderSummaryDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotCancellableException;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderItem;
@@ -98,6 +99,39 @@ public class OrderService {
         restoreStock(order);
         order.setStatus(OrderStatus.CANCELLED);
         return true;
+    }
+
+    @Transactional
+    public void attachCheckoutSession(Long orderId, String sessionId) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        order.setStripeSessionId(sessionId);
+    }
+
+    @Transactional(readOnly = true)
+    public String findCheckoutSessionId(Long orderId) {
+        return orderRepository.findById(orderId)
+            .map(Order::getStripeSessionId)
+            .orElse(null);
+    }
+
+    /**
+     * Cancels the order only if it is still PENDING, under the row lock, and gives its stock back.
+     */
+    @Transactional
+    public OrderResponseDTO cancelPendingOrder(Long orderId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return orderMapper.toResponse(order);
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new OrderNotCancellableException(orderId,
+                "its status is " + order.getStatus());
+        }
+        restoreStock(order);
+        order.setStatus(OrderStatus.CANCELLED);
+        return orderMapper.toResponse(order);
     }
 
     private void restoreStock(Order order) {

@@ -23,6 +23,7 @@ import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.ShippingAddressDTO;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
+import io.github.guzillo.fruitifystorebackend.order.service.OrderCancellationService;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
 import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
 import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
@@ -56,6 +57,9 @@ class OrderControllerTest {
 
     @MockitoBean
     private OrderService orderService;
+
+    @MockitoBean
+    private OrderCancellationService orderCancellationService;
 
     @MockitoBean
     private CustomUserDetailsService userDetailsService;

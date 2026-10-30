@@ -58,6 +58,12 @@ public class PaymentService {
             throw new OrderExpiredException(order.id());
         }
 
+        // Close the previous attempt so it cannot be paid after this one (or after a cancel).
+        String previousSessionId = orderService.findCheckoutSessionId(order.id());
+        if (previousSessionId != null && !closeCheckoutSession(previousSessionId)) {
+            throw new OrderNotPayableException(order.id(), order.status());
+        }
+
         List<OrderItemResponseDTO> orderItems = order.items();
         List<LineItem> lineItems = toLineItems(orderItems);
 
@@ -71,9 +77,32 @@ public class PaymentService {
                 .addAllLineItem(lineItems)
                 .build();
         try {
-            return stripeClient.v1().checkout().sessions().create(params);
+            Session session = stripeClient.v1().checkout().sessions().create(params);
+            orderService.attachCheckoutSession(order.id(), session.getId());
+            return session;
         } catch (StripeException e) {
             log.error(e.getMessage());
+            throw new CheckoutSessionCreationException();
+        }
+    }
+
+    /**
+     * Makes sure a Stripe session can no longer be paid.
+     *
+     * @return false if the session was already paid, true if it is now closed
+     */
+    public boolean closeCheckoutSession(String sessionId) {
+        try {
+            Session session = stripeClient.v1().checkout().sessions().retrieve(sessionId);
+            if ("complete".equals(session.getStatus())) {
+                return false;
+            }
+            if ("open".equals(session.getStatus())) {
+                stripeClient.v1().checkout().sessions().expire(sessionId);
+            }
+            return true;
+        } catch (StripeException e) {
+            log.error("Could not close Stripe session {}: {}", sessionId, e.getMessage());
             throw new CheckoutSessionCreationException();
         }
     }

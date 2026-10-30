@@ -4,6 +4,7 @@ import io.github.guzillo.fruitifystorebackend.common.pagination.PageableSortVali
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderCreateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderPageResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.service.OrderCancellationService;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,6 +36,7 @@ public class OrderController {
     private static final Set<String> SORTABLE_PROPERTIES = Set.of("createdAt", "totalAmount");
 
     private final OrderService orderService;
+    private final OrderCancellationService orderCancellationService;
 
     @Operation(summary = "List my orders",
         description = "Paginated list of the current user's orders. "
@@ -58,6 +60,19 @@ public class OrderController {
     public OrderResponseDTO createOrder(@Valid @RequestBody OrderCreateRequestDTO request,
         Authentication authentication) {
         return orderService.createOrder(authentication.getName(), request);
+    }
+
+    @Operation(summary = "Cancel my unpaid order",
+        description = "Cancels a PENDING order, closes its Stripe checkout session and releases "
+            + "the reserved stock. Paid orders cannot be cancelled.")
+    @ApiResponse(responseCode = "200", description = "Order cancelled")
+    @ApiResponse(responseCode = "404", description = "Order not found")
+    @ApiResponse(responseCode = "409", description = "Order is paid, or a payment is in progress")
+    @ApiResponse(responseCode = "503", description = "Payment provider is unavailable")
+    @PostMapping("/{orderId}/cancel")
+    public OrderResponseDTO cancelOrder(@PathVariable Long orderId,
+        Authentication authentication) {
+        return orderCancellationService.cancel(authentication.getName(), orderId);
     }
 
     @Operation(summary = "Get my order")

@@ -54,6 +54,10 @@ public class Order extends AuditableBaseEntity {
     @Embedded
     private ShippingAddress shippingAddress;
 
+    // Stripe Checkout session of the latest payment attempt; closed when the order is cancelled.
+    @Column(name = "stripe_session_id", length = 255)
+    private String stripeSessionId;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> orderItems = new LinkedHashSet<>();
 

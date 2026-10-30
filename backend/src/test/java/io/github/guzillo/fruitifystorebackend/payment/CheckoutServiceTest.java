@@ -138,6 +138,42 @@ class CheckoutServiceTest {
         verify(orderService, never()).changeStatus(any(), any());
     }
 
+    @Test
+    void shouldExpireOpenStripeSession() throws StripeException {
+        stubStripeSessionService();
+        when(stripeSessionService.retrieve("cs_open")).thenReturn(stripeSession);
+        when(stripeSession.getStatus()).thenReturn("open");
+
+        assertThat(checkoutService.closeCheckoutSession("cs_open")).isTrue();
+
+        verify(stripeSessionService).expire("cs_open");
+    }
+
+    @Test
+    void shouldReportPaidStripeSessionWithoutExpiringIt() throws StripeException {
+        stubStripeSessionService();
+        when(stripeSessionService.retrieve("cs_paid")).thenReturn(stripeSession);
+        when(stripeSession.getStatus()).thenReturn("complete");
+
+        assertThat(checkoutService.closeCheckoutSession("cs_paid")).isFalse();
+
+        verify(stripeSessionService, never()).expire(any());
+    }
+
+    @Test
+    void shouldStoreStripeSessionIdOnOrder() throws StripeException {
+        when(stripeProperties.domain()).thenReturn("https://shop.example.com");
+        when(orderService.findOrder("customer@example.com", 123L)).thenReturn(order());
+        stubStripeSessionService();
+        when(stripeSessionService.create(any(SessionCreateParams.class)))
+            .thenReturn(stripeSession);
+        when(stripeSession.getId()).thenReturn("cs_new");
+
+        checkoutService.createCheckoutSession("customer@example.com", "123");
+
+        verify(orderService).attachCheckoutSession(123L, "cs_new");
+    }
+
     private void stubStripeSessionService() {
         when(stripeClient.v1()).thenReturn(stripeV1Services);
         when(stripeV1Services.checkout()).thenReturn(stripeCheckoutService);

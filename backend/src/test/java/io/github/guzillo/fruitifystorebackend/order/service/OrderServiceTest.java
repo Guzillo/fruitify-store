@@ -23,6 +23,7 @@ import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
 import io.github.guzillo.fruitifystorebackend.order.mapper.OrderMapper;
 import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotCancellableException;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderItem;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
 import io.github.guzillo.fruitifystorebackend.order.model.ShippingAddress;
@@ -157,6 +158,42 @@ class OrderServiceTest {
         assertThat(orderService.cancelIfExpired(200L, Instant.now())).isFalse();
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+    }
+
+    @Test
+    void shouldCancelPendingOrderFromUserAndRestoreStock() {
+        Order order = pendingOrderCreatedAt(Instant.now());
+        order.setShippingAddress(shippingAddress());
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+        when(productRepository.findAllByIdInForUpdate(any())).thenReturn(List.of(product));
+
+        assertThat(orderService.cancelPendingOrder(200L).status())
+            .isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(13);
+    }
+
+    @Test
+    void shouldRefuseToCancelPaidOrderFromCancelEndpoint() {
+        Order order = pendingOrderCreatedAt(Instant.now());
+        order.setShippingAddress(shippingAddress());
+        order.setStatus(OrderStatus.PAID);
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.cancelPendingOrder(200L))
+            .isInstanceOf(OrderNotCancellableException.class);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        verify(productRepository, never()).findAllByIdInForUpdate(any());
+    }
+
+    private ShippingAddress shippingAddress() {
+        ShippingAddress address = new ShippingAddress();
+        address.setRecipientName("Jan Kowalski");
+        address.setStreet("Marszałkowska 1");
+        address.setCity("Warsaw");
+        address.setPostalCode("00-001");
+        address.setCountry("PL");
+        return address;
     }
 
     private Order pendingOrderCreatedAt(Instant createdAt) {
