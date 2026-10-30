@@ -22,9 +22,12 @@
 
 .layout img {
   width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: #fbfbfb;
   border-radius: 8px;
-  object-fit: cover;
-  background: #f4f4f4;
 }
 
 .info {
