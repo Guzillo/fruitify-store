@@ -1,0 +1,32 @@
+.add-to-cart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.add-to-cart button {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.add-to-cart button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-to-cart .success {
+  margin: 0;
+  color: #2e7d32;
+  font-size: 0.85rem;
+}
+
+.add-to-cart .error {
+  margin: 0;
+  color: #c62828;
+  font-size: 0.85rem;
+}

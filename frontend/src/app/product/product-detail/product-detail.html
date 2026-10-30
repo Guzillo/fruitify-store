@@ -21,6 +21,8 @@
         } @else {
           <p class="out-of-stock">Out of stock</p>
         }
+
+        <app-add-to-cart [productId]="product.id" [inStock]="product.stockQuantity > 0" />
       </div>
     </article>
   }

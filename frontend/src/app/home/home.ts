@@ -2,12 +2,13 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Category, Product } from '../models/product.model';
+import { AddToCart } from '../cart/add-to-cart/add-to-cart';
 import { CategoryService } from '../services/category.service';
 import { ProductService } from '../services/product.service';
 
 @Component({
   selector: 'app-home',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, AddToCart],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

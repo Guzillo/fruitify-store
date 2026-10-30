@@ -1,0 +1,54 @@
+<section class="cart">
+  <h1>My cart</h1>
+
+  @if (loading()) {
+    <p class="status">Loading cart…</p>
+  } @else if (cart(); as current) {
+    @if (current.items.length === 0) {
+      <p class="status">Your cart is empty. <a routerLink="/">Browse products</a>.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of current.items; track item.id) {
+            <tr>
+              <td><a [routerLink]="['/products', item.productId]">{{ item.productName }}</a></td>
+              <td>{{ item.price | currency: 'PLN' }}</td>
+              <td class="quantity">
+                <button type="button" (click)="changeQuantity(item, item.quantity - 1)"
+                  [disabled]="item.quantity <= 1">−</button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" (click)="changeQuantity(item, item.quantity + 1)">+</button>
+              </td>
+              <td>{{ item.price * item.quantity | currency: 'PLN' }}</td>
+              <td>
+                <button type="button" class="remove" (click)="remove(item)">Remove</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <p class="total">Total: <strong>{{ total() | currency: 'PLN' }}</strong></p>
+        <div class="actions">
+          <button type="button" class="secondary" (click)="clear()">Clear cart</button>
+          <!-- Checkout comes in the next step. -->
+          <button type="button" disabled>Checkout (coming soon)</button>
+        </div>
+      </div>
+    }
+  }
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+</section>

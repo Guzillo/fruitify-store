@@ -1,0 +1,117 @@
+.cart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cart h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+th {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+td a {
+  color: #2e7d32;
+  text-decoration: none;
+}
+
+.quantity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background: #fff;
+  color: #2e7d32;
+  cursor: pointer;
+}
+
+.quantity button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.remove {
+  border: 0;
+  background: none;
+  color: #c62828;
+  cursor: pointer;
+  font: inherit;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.total {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actions button {
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.actions button.secondary {
+  background: #fff;
+  color: #2e7d32;
+  border: 1px solid #2e7d32;
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status {
+  color: #666;
+}
+
+.error {
+  color: #c62828;
+}
+
+.status a {
+  color: #2e7d32;
+}

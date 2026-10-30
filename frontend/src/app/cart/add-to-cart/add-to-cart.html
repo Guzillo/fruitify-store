@@ -1,0 +1,12 @@
+<div class="add-to-cart">
+  <button type="button" (click)="add()" [disabled]="!inStock() || adding()">
+    {{ adding() ? 'Adding…' : (inStock() ? 'Add to cart' : 'Out of stock') }}
+  </button>
+
+  @if (message(); as text) {
+    <p class="success">{{ text }}</p>
+  }
+  @if (error(); as text) {
+    <p class="error">{{ text }}</p>
+  }
+</div>

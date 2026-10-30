@@ -4,12 +4,13 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EMPTY, catchError, map, switchMap, tap } from 'rxjs';
+import { AddToCart } from '../../cart/add-to-cart/add-to-cart';
 import { Product } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, AddToCart],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css',
 })

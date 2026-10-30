@@ -3,6 +3,7 @@
 
   <nav class="auth-nav">
     @if (auth.currentUser(); as user) {
+      <a routerLink="/cart">Cart</a>
       <a routerLink="/profile">Hi, {{ user.firstName || user.email }}</a>
       <button type="button" (click)="logout()">Log out</button>
     } @else {
