@@ -1,0 +1,40 @@
+<section class="orders">
+  <h1>My orders</h1>
+
+  @if (loading()) {
+    <p class="status">Loading orders…</p>
+  } @else if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  } @else if (orders().length === 0) {
+    <p class="status">You have no orders yet. <a routerLink="/">Browse products</a>.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.id) {
+          <tr>
+            <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+            <td>{{ order.createdAt | date: 'medium' }}</td>
+            <td><span class="status-badge" [class]="order.status.toLowerCase()">{{ order.status }}</span></td>
+            <td>{{ order.totalAmount | currency: 'PLN' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <nav class="pagination">
+        <button type="button" (click)="previousPage()" [disabled]="currentPage() === 0">Previous</button>
+        <span>Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+        <button type="button" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">Next</button>
+      </nav>
+    }
+  }
+</section>

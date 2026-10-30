@@ -1,0 +1,61 @@
+<section class="orders">
+  <a routerLink="/orders" class="back">← Back to my orders</a>
+
+  @if (loading()) {
+    <p class="status">Loading order…</p>
+  } @else if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  } @else if (order(); as order) {
+    <h1>Order {{ order.orderNumber }}</h1>
+
+    @if (paymentCancelled() && order.status === 'PENDING') {
+      <p class="notice">Payment was cancelled. You can try again below.</p>
+    }
+
+    <div class="detail-meta">
+      <span>{{ order.createdAt | date: 'medium' }}</span>
+      <span class="status-badge" [class]="order.status.toLowerCase()">{{ order.status }}</span>
+    </div>
+
+    <h2>Shipping to</h2>
+    <p class="address">
+      {{ order.shippingAddress.recipientName }}<br />
+      {{ order.shippingAddress.street }}<br />
+      {{ order.shippingAddress.postalCode }} {{ order.shippingAddress.city }}<br />
+      {{ order.shippingAddress.country }}
+    </p>
+
+    <h2>Items</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of order.items; track item.productId) {
+          <tr>
+            <td>{{ item.productName }}</td>
+            <td>{{ item.priceAtPurchase | currency: 'PLN' }}</td>
+            <td>{{ item.quantity }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <p class="total">Total: <strong>{{ order.totalAmount | currency: 'PLN' }}</strong></p>
+      @if (order.status === 'PENDING') {
+        <button type="button" (click)="pay(order)" [disabled]="paying()">
+          {{ paying() ? 'Redirecting to payment…' : 'Pay now' }}
+        </button>
+      }
+    </div>
+
+    @if (payError(); as message) {
+      <p class="error">{{ message }}</p>
+    }
+  }
+</section>

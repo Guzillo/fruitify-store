@@ -1,0 +1,46 @@
+@if (returnedFromPayment()) {
+  <section class="auth-form">
+    <h1>Thank you!</h1>
+    <p>Your payment was received. The order status updates within a moment.</p>
+    <a routerLink="/orders">View my orders</a>
+  </section>
+} @else {
+  <form class="auth-form" [formGroup]="form" (ngSubmit)="placeOrder()">
+    <h1>Shipping details</h1>
+
+    <label>
+      Recipient name
+      <input type="text" formControlName="recipientName" autocomplete="name" />
+    </label>
+
+    <label>
+      Street and number
+      <input type="text" formControlName="street" autocomplete="street-address" />
+    </label>
+
+    <label>
+      City
+      <input type="text" formControlName="city" autocomplete="address-level2" />
+    </label>
+
+    <label>
+      Postal code
+      <input type="text" formControlName="postalCode" autocomplete="postal-code" />
+    </label>
+
+    <label>
+      Country
+      <input type="text" formControlName="country" autocomplete="country" />
+    </label>
+
+    @if (error(); as message) {
+      <p class="error">{{ message }}</p>
+    }
+
+    <button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Redirecting to payment…' : 'Continue to payment' }}
+    </button>
+
+    <p class="switch"><a routerLink="/cart">Back to cart</a></p>
+  </form>
+}

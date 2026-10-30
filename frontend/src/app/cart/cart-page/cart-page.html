@@ -41,8 +41,7 @@
         <p class="total">Total: <strong>{{ total() | currency: 'PLN' }}</strong></p>
         <div class="actions">
           <button type="button" class="secondary" (click)="clear()">Clear cart</button>
-          <!-- Checkout comes in the next step. -->
-          <button type="button" disabled>Checkout (coming soon)</button>
+          <button type="button" routerLink="/checkout">Checkout</button>
         </div>
       </div>
     }

@@ -6,11 +6,17 @@ import { Profile } from './auth/profile/profile';
 import { ProductDetail } from './product/product-detail/product-detail';
 import { CartPage } from './cart/cart-page/cart-page';
 import { authGuard } from './auth/auth.guard';
+import { Checkout } from './checkout/checkout';
+import { Orders } from './orders/orders';
+import { OrderDetail } from './orders/order-detail/order-detail';
 
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'products/:id', component: ProductDetail },
   { path: 'cart', component: CartPage, canActivate: [authGuard] },
+  { path: 'checkout', component: Checkout, canActivate: [authGuard] },
+  { path: 'orders', component: Orders, canActivate: [authGuard] },
+  { path: 'orders/:id', component: OrderDetail, canActivate: [authGuard] },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'profile', component: Profile },

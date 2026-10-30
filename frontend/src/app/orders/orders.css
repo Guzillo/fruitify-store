@@ -1,0 +1,135 @@
+.orders {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.orders h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.orders h2 {
+  margin: 0.5rem 0 0;
+  font-size: 1.05rem;
+}
+
+.orders table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.orders th,
+.orders td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.orders th {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.orders a {
+  color: #2e7d32;
+  text-decoration: none;
+}
+
+.back {
+  align-self: flex-start;
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #555;
+}
+
+.address {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.status-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #eee;
+  color: #333;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #7a5b00;
+}
+
+.status-badge.paid {
+  background: #d4edda;
+  color: #1b5e20;
+}
+
+.status-badge.cancelled {
+  background: #f8d7da;
+  color: #8a1c1c;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.total {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.summary button,
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.summary button:disabled,
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status {
+  color: #666;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #7a5b00;
+}
+
+.error {
+  color: #c62828;
+}
