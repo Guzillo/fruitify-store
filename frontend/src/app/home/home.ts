@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Product } from '../models/product.model';
+import { Category, Product } from '../models/product.model';
+import { CategoryService } from '../services/category.service';
 import { ProductService } from '../services/product.service';
 
 @Component({
@@ -11,14 +12,26 @@ import { ProductService } from '../services/product.service';
 })
 export class Home implements OnInit {
   private readonly productService = inject(ProductService);
+  private readonly categoryService = inject(CategoryService);
 
   protected readonly products = signal<Product[]>([]);
+  protected readonly categories = signal<Category[]>([]);
+  protected readonly selectedCategoryId = signal<number | null>(null);
   protected readonly currentPage = signal(0);
   protected readonly totalPages = signal(0);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.loadCategories();
+    this.loadPage(0);
+  }
+
+  protected selectCategory(categoryId: number | null): void {
+    if (categoryId === this.selectedCategoryId()) {
+      return;
+    }
+    this.selectedCategoryId.set(categoryId);
     this.loadPage(0);
   }
 
@@ -26,7 +39,7 @@ export class Home implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.productService.getProducts(page).subscribe({
+    this.productService.getProducts(page, 12, this.selectedCategoryId() ?? undefined).subscribe({
       next: (result) => {
         this.products.set(result.content);
         this.currentPage.set(result.number);
@@ -50,5 +63,12 @@ export class Home implements OnInit {
     if (this.currentPage() < this.totalPages() - 1) {
       this.loadPage(this.currentPage() + 1);
     }
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getCategories().subscribe({
+      next: (categories) => this.categories.set(categories),
+      error: () => this.error.set('Could not load categories.'),
+    });
   }
 }

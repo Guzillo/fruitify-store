@@ -75,6 +75,27 @@ h1 {
   font-size: 0.85rem;
 }
 
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.categories button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #2e7d32;
+  border-radius: 999px;
+  background: #fff;
+  color: #2e7d32;
+  cursor: pointer;
+}
+
+.categories button.active {
+  background: #2e7d32;
+  color: #fff;
+}
+
 .pagination {
   display: flex;
   justify-content: center;

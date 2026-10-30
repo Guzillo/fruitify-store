@@ -1,5 +1,24 @@
 <h1>Our fruits</h1>
 
+<nav class="categories">
+  <button
+    type="button"
+    [class.active]="selectedCategoryId() === null"
+    (click)="selectCategory(null)"
+  >
+    All
+  </button>
+  @for (category of categories(); track category.id) {
+    <button
+      type="button"
+      [class.active]="selectedCategoryId() === category.id"
+      (click)="selectCategory(category.id)"
+    >
+      {{ category.name }}
+    </button>
+  }
+</nav>
+
 @if (error(); as message) {
   <p class="error">{{ message }}</p>
 }
