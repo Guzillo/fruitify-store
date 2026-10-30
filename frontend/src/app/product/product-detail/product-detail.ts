@@ -89,8 +89,10 @@ export class ProductDetail implements OnInit {
 
     this.productService.deleteProduct(product.id).subscribe({
       next: () => this.router.navigateByUrl('/'),
-      error: () => {
-        this.adminError.set('Could not delete this product. If it appears in orders, hide it instead.');
+      error: (err: HttpErrorResponse) => {
+        this.adminError.set(err.status === 409
+          ? 'This product is part of existing orders, so it cannot be deleted. Hide it instead.'
+          : 'Could not delete this product. Please try again.');
         this.adminBusy.set(false);
       },
     });
