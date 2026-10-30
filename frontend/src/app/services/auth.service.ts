@@ -19,6 +19,8 @@ export class AuthService {
 
   readonly currentUser = signal<UserProfile | null>(null);
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
+  // Only drives which controls are shown; the server checks the role on every admin call.
+  readonly isAdmin = signal(hasAdminRole(localStorage.getItem(ACCESS_TOKEN_KEY)));
 
   signup(request: SignupRequest): Observable<void> {
     return this.http.post<void>(`${API_URL}/auth/signup`, request);
@@ -70,6 +72,7 @@ export class AuthService {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     this.currentUser.set(null);
+    this.isAdmin.set(false);
   }
 
   getAccessToken(): string | null {
@@ -79,6 +82,22 @@ export class AuthService {
   private storeTokens(tokens: AuthenticationResponse): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    this.isAdmin.set(hasAdminRole(tokens.accessToken));
+  }
+}
+
+// Reads the "scope" claim of the JWT (roles are listed there as ROLE_ADMIN, ROLE_USER, ...).
+// The signature is not checked here; that is the server's job.
+function hasAdminRole(token: string | null): boolean {
+  if (!token) {
+    return false;
+  }
+  try {
+    const payloadPart = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(payloadPart));
+    return typeof payload.scope === 'string' && payload.scope.split(' ').includes('ROLE_ADMIN');
+  } catch {
+    return false;
   }
 }
 

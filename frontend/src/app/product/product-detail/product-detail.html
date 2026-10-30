@@ -6,24 +6,50 @@
   } @else if (error(); as message) {
     <p class="error">{{ message }}</p>
   } @else if (product(); as product) {
-    <article class="layout">
-      <img [src]="product.imageUrl" [alt]="product.name" />
+    @if (editing()) {
+      <app-product-form
+        [product]="product"
+        (saved)="onSaved($event)"
+        (cancelled)="editing.set(false)" />
+    } @else {
+      <article class="layout">
+        <img [src]="product.imageUrl" [alt]="product.name" />
 
-      <div class="info">
-        <span class="category">{{ product.category.name }}</span>
-        <h1>{{ product.name }}</h1>
-        <p class="description">{{ product.description }}</p>
+        <div class="info">
+          <span class="category">{{ product.category.name }}</span>
+          <h1>{{ product.name }}</h1>
+          <p class="description">{{ product.description }}</p>
 
-        <p class="price">{{ product.price | currency: 'PLN' }}</p>
+          <p class="price">{{ product.price | currency: 'PLN' }}</p>
 
-        @if (product.stockQuantity > 0) {
-          <p class="in-stock">In stock ({{ product.stockQuantity }} available)</p>
-        } @else {
-          <p class="out-of-stock">Out of stock</p>
-        }
+          @if (product.stockQuantity > 0) {
+            <p class="in-stock">In stock ({{ product.stockQuantity }} available)</p>
+          } @else {
+            <p class="out-of-stock">Out of stock</p>
+          }
 
-        <app-add-to-cart [productId]="product.id" [inStock]="product.stockQuantity > 0" />
-      </div>
-    </article>
+          @if (!product.isActive) {
+            <p class="hidden-note">Hidden from customers.</p>
+          }
+
+          <app-add-to-cart [productId]="product.id" [inStock]="product.stockQuantity > 0" />
+
+          @if (auth.isAdmin()) {
+            <div class="admin-actions">
+              <button type="button" (click)="editing.set(true)" [disabled]="adminBusy()">Edit</button>
+              <button type="button" class="secondary" (click)="toggleVisibility(product)"
+                [disabled]="adminBusy()">
+                {{ product.isActive ? 'Hide from customers' : 'Show to customers' }}
+              </button>
+              <button type="button" class="danger" (click)="delete(product)"
+                [disabled]="adminBusy()">Delete</button>
+            </div>
+            @if (adminError(); as message) {
+              <p class="error">{{ message }}</p>
+            }
+          }
+        </div>
+      </article>
+    }
   }
 </section>

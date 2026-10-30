@@ -1,0 +1,59 @@
+<form class="product-form" [formGroup]="form" (ngSubmit)="submit()">
+  <h2>{{ product() ? 'Edit product' : 'New product' }}</h2>
+
+  <label>
+    Name
+    <input type="text" formControlName="name" />
+  </label>
+
+  <label>
+    Description
+    <textarea rows="3" formControlName="description"></textarea>
+  </label>
+
+  <div class="row">
+    <label>
+      Price (PLN)
+      <input type="number" step="0.01" min="0" formControlName="price" />
+    </label>
+
+    <label>
+      Stock
+      <input type="number" min="0" step="1" formControlName="stockQuantity" />
+    </label>
+  </div>
+
+  <label>
+    Category
+    <select formControlName="categoryId">
+      <option [ngValue]="null" disabled>Choose a category</option>
+      @for (category of categories(); track category.id) {
+        <option [ngValue]="category.id">{{ category.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
+    Image URL (optional)
+    <input type="url" formControlName="imageUrl" />
+  </label>
+
+  <label class="checkbox">
+    <input type="checkbox" formControlName="isActive" />
+    Visible to customers
+  </label>
+
+  @if (form.invalid && form.touched) {
+    <p class="error">Fill in all required fields with valid values.</p>
+  }
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  <div class="actions">
+    <button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Saving…' : (product() ? 'Save changes' : 'Create product') }}
+    </button>
+    <button type="button" class="secondary" (click)="cancelled.emit()">Cancel</button>
+  </div>
+</form>

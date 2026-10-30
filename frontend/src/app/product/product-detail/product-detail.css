@@ -70,6 +70,47 @@
   color: #666;
 }
 
+.hidden-note {
+  margin: 0;
+  color: #7a5b00;
+  font-size: 0.9rem;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #ccc;
+}
+
+.admin-actions button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-actions button.secondary {
+  background: #fff;
+  color: #2e7d32;
+}
+
+.admin-actions button.danger {
+  background: #fff;
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.admin-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .error {
   color: #c62828;
 }

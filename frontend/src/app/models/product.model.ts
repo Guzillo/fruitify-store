@@ -15,6 +15,18 @@ export interface Product {
   stockQuantity: number;
   imageUrl: string;
   category: Category;
+  isActive: boolean;
+}
+
+// Body for POST /api/products (all fields required) and PUT /api/products/{id} (partial).
+export interface ProductWriteRequest {
+  name: string;
+  description: string;
+  price: number;
+  stockQuantity: number;
+  isActive: boolean;
+  imageUrl: string | null;
+  categoryId: number;
 }
 
 // Mirrors ProductPageResponseDTO: one page of products plus paging info.

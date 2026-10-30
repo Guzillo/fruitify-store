@@ -1,29 +1,69 @@
 <section class="orders">
-  <h1>My orders</h1>
+  <h1>{{ scope() === 'all' ? 'All orders' : 'My orders' }}</h1>
+
+  @if (auth.isAdmin()) {
+    <div class="scope-switch">
+      <button type="button" [class.active]="scope() === 'mine'" (click)="switchScope('mine')">
+        My orders
+      </button>
+      <button type="button" [class.active]="scope() === 'all'" (click)="switchScope('all')">
+        All customers
+      </button>
+    </div>
+  }
+
+  @if (actionError(); as message) {
+    <p class="error">{{ message }}</p>
+  }
 
   @if (loading()) {
     <p class="status">Loading orders…</p>
   } @else if (error(); as message) {
     <p class="error">{{ message }}</p>
   } @else if (orders().length === 0) {
-    <p class="status">You have no orders yet. <a routerLink="/">Browse products</a>.</p>
+    <p class="status">No orders yet. <a routerLink="/">Browse products</a>.</p>
   } @else {
     <table>
       <thead>
         <tr>
           <th>Order</th>
+          @if (scope() === 'all') {
+            <th>Customer</th>
+          }
           <th>Date</th>
           <th>Status</th>
           <th>Total</th>
+          @if (scope() === 'all' && auth.isAdmin()) {
+            <th></th>
+          }
         </tr>
       </thead>
       <tbody>
         @for (order of orders(); track order.id) {
           <tr>
-            <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+            <td>
+              @if (scope() === 'mine') {
+                <a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a>
+              } @else {
+                {{ order.orderNumber }}
+              }
+            </td>
+            @if (scope() === 'all') {
+              <td>{{ customerOf(order) }}</td>
+            }
             <td>{{ order.createdAt | date: 'medium' }}</td>
             <td><span class="status-badge" [class]="order.status.toLowerCase()">{{ order.status }}</span></td>
             <td>{{ order.totalAmount | currency: 'PLN' }}</td>
+            @if (scope() === 'all') {
+              <td class="admin-actions">
+                @if (order.status === 'PENDING') {
+                  <button type="button" (click)="changeStatus(order, 'PAID')">Mark paid</button>
+                }
+                @if (order.status !== 'CANCELLED') {
+                  <button type="button" class="secondary" (click)="changeStatus(order, 'CANCELLED')">Cancel</button>
+                }
+              </td>
+            }
           </tr>
         }
       </tbody>

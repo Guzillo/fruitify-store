@@ -31,6 +31,20 @@ export interface Order extends OrderSummary {
   items: OrderItem[];
 }
 
+// Mirrors order/dto/AdminOrderSummaryDTO (admin endpoint only).
+export interface AdminOrderSummary extends OrderSummary {
+  userId: number;
+  customerEmail: string;
+}
+
+export interface AdminOrderPage {
+  content: AdminOrderSummary[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface OrderPage {
   content: OrderSummary[];
   number: number;

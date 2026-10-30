@@ -60,6 +60,29 @@ h1 {
   text-decoration: underline;
 }
 
+.hidden-badge {
+  align-self: flex-start;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eee;
+  color: #555;
+  font-size: 0.75rem;
+}
+
+.admin-bar {
+  margin-bottom: 1.5rem;
+}
+
+.admin-bar > button {
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
 .description {
   margin: 0;
   color: #555;

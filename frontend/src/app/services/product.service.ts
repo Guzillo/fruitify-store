@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Product, ProductPage } from '../models/product.model';
+import { Product, ProductPage, ProductWriteRequest } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -23,5 +23,18 @@ export class ProductService {
 
   getProduct(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
+  }
+
+  // Admin only; the server rejects other users with 403.
+  createProduct(request: ProductWriteRequest): Observable<Product> {
+    return this.http.post<Product>(this.apiUrl, request);
+  }
+
+  updateProduct(id: number, request: Partial<ProductWriteRequest>): Observable<Product> {
+    return this.http.put<Product>(`${this.apiUrl}/${id}`, request);
+  }
+
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

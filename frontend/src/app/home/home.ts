@@ -3,18 +3,23 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Category, Product } from '../models/product.model';
 import { AddToCart } from '../cart/add-to-cart/add-to-cart';
+import { ProductForm } from '../product/product-form/product-form';
+import { AuthService } from '../services/auth.service';
 import { CategoryService } from '../services/category.service';
 import { ProductService } from '../services/product.service';
 
 @Component({
   selector: 'app-home',
-  imports: [CurrencyPipe, RouterLink, AddToCart],
+  imports: [CurrencyPipe, RouterLink, AddToCart, ProductForm],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
+  protected readonly auth = inject(AuthService);
+
+  protected readonly showNewProductForm = signal(false);
 
   protected readonly products = signal<Product[]>([]);
   protected readonly categories = signal<Category[]>([]);
@@ -26,6 +31,11 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    this.loadPage(0);
+  }
+
+  protected onProductSaved(): void {
+    this.showNewProductForm.set(false);
     this.loadPage(0);
   }
 

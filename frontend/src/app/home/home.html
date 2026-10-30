@@ -1,5 +1,15 @@
 <h1>Our fruits</h1>
 
+@if (auth.isAdmin()) {
+  <div class="admin-bar">
+    @if (showNewProductForm()) {
+      <app-product-form (saved)="onProductSaved()" (cancelled)="showNewProductForm.set(false)" />
+    } @else {
+      <button type="button" (click)="showNewProductForm.set(true)">+ New product</button>
+    }
+  </div>
+}
+
 <nav class="categories">
   <button
     type="button"
@@ -34,6 +44,9 @@
       <div class="card-body">
         <span class="category">{{ product.category.name }}</span>
         <h2><a [routerLink]="['/products', product.id]">{{ product.name }}</a></h2>
+        @if (!product.isActive) {
+          <span class="hidden-badge">Hidden from customers</span>
+        }
         <p class="description">{{ product.description }}</p>
         <div class="card-footer">
           <strong>{{ product.price | currency: 'PLN' }}</strong>
