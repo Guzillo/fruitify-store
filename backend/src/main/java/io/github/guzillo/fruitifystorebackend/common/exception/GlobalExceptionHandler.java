@@ -14,6 +14,7 @@ import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseEx
 import io.github.guzillo.fruitifystorebackend.payment.error.CheckoutSessionCreationException;
 import io.github.guzillo.fruitifystorebackend.payment.error.WebhookSignatureException;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductInUseException;
 import io.github.guzillo.fruitifystorebackend.common.exception.InvalidSortPropertyException;
 import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -73,6 +74,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(OrderNotPayableException.class)
     public ResponseEntity<Object> handleOrderNotPayableException(
         OrderNotPayableException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ProductInUseException.class)
+    public ResponseEntity<Object> handleProductInUseException(
+        ProductInUseException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
     }

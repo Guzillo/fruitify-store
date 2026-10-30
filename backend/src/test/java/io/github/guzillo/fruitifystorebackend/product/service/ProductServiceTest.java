@@ -15,6 +15,7 @@ import io.github.guzillo.fruitifystorebackend.category.dto.CategoryResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductInUseException;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
@@ -236,6 +237,17 @@ class ProductServiceTest {
         productService.deleteProduct(1L);
 
         verify(productRepository).delete(product);
+    }
+
+    @Test
+    void shouldRefuseToDeleteProductThatIsPartOfOrders() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(new Product()));
+        when(productRepository.isInAnyOrder(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.deleteProduct(1L))
+            .isInstanceOf(ProductInUseException.class);
+
+        verify(productRepository, never()).delete(any());
     }
 
     @Test

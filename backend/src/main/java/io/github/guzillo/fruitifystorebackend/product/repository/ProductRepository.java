@@ -20,6 +20,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByNameAndIdNot(String name, Long id);
 
+    @Query("select case when count(oi) > 0 then true else false end "
+        + "from OrderItem oi where oi.product.id = :productId")
+    boolean isInAnyOrder(@Param("productId") Long productId);
+
     @EntityGraph(attributePaths = "category")
     Optional<Product> findWithCategoryById(Long id);
 

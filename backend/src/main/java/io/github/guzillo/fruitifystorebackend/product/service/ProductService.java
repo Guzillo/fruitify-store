@@ -7,6 +7,7 @@ import io.github.guzillo.fruitifystorebackend.product.dto.ProductCreateRequestDT
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductResponseDTO;
 import io.github.guzillo.fruitifystorebackend.product.dto.ProductUpdateRequestDTO;
 import io.github.guzillo.fruitifystorebackend.product.exception.ProductAlreadyExistsException;
+import io.github.guzillo.fruitifystorebackend.product.exception.ProductInUseException;
 import io.github.guzillo.fruitifystorebackend.product.mapper.ProductMapper;
 import io.github.guzillo.fruitifystorebackend.product.model.Product;
 import io.github.guzillo.fruitifystorebackend.product.repository.ProductRepository;
@@ -106,6 +107,10 @@ public class ProductService {
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+        // Order items reference the product, so it can only be hidden once it was ordered.
+        if (productRepository.isInAnyOrder(id)) {
+            throw new ProductInUseException(id);
+        }
         productRepository.delete(product);
     }
 }
