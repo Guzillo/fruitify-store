@@ -7,8 +7,10 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
-import lombok.RequiredArgsConstructor;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +47,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final RsaKeyProperties rsaKeyProperties;
+    private final RSAPublicKey jwtPublicKey;
+    private final RSAPrivateKey jwtPrivateKey;
     private final CustomUserDetailsService userDetailsService;
 
     @Bean
@@ -90,13 +93,12 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.publicKey()).build();
+        return NimbusJwtDecoder.withPublicKey(jwtPublicKey).build();
     }
 
     @Bean
     JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(rsaKeyProperties.publicKey()).privateKey(
-            rsaKeyProperties.privateKey()).build();
+        JWK jwk = new RSAKey.Builder(jwtPublicKey).privateKey(jwtPrivateKey).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
     }

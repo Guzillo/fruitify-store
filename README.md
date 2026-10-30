@@ -62,17 +62,35 @@ flowchart LR
 * **OpenSSL** (for RSA key generation)
 
 ### 1. Start Database & Backend
+
+Generate an RSA key pair and expose it to the app as base64 environment variables
+(first run only):
+
+```bash
+mkdir -p ~/.fruitify
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out ~/.fruitify/private.pem
+openssl rsa -pubout -in ~/.fruitify/private.pem -out ~/.fruitify/public.pem
+
+export JWT_PRIVATE_KEY="$(base64 -w0 ~/.fruitify/private.pem)"
+export JWT_PUBLIC_KEY="$(base64 -w0 ~/.fruitify/public.pem)"
+```
+
+Add the same two variables (plus the Stripe keys) to the repo-root `.env` file — it is loaded by
+Docker Compose and ignored by git. See `.env.example` for the expected format.
+
 ```bash
 cd backend
 docker compose up -d db
 
-# Generate local RSA keys (first run only)
-mkdir -p src/main/resources/certs
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out src/main/resources/certs/private.pem
-openssl rsa -pubout -in src/main/resources/certs/private.pem -out src/main/resources/certs/public.pem
-
-# Run Spring Boot (seeds demo products & accounts)
+# Run Spring Boot locally (seeds demo products & accounts)
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Or run the whole backend stack in Docker (DB + API):
+
+```bash
+cd backend
+docker compose up --build -d
 ```
 * **API**: `http://localhost:8080`
 * **Swagger UI**: `http://localhost:8080/swagger-ui.html`
@@ -97,6 +115,8 @@ npm start
 
 ```bash
 # Backend unit, integration & multi-threaded concurrency tests
+# JWT keys come from JWT_PUBLIC_KEY / JWT_PRIVATE_KEY, falling back to
+# src/main/resources/certs/{public,private}.pem when the variables are not set.
 cd backend && ./mvnw test
 
 # Frontend component & HTTP testing suite (Vitest)

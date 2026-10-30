@@ -25,7 +25,6 @@ import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderCancellationService;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
-import io.github.guzillo.fruitifystorebackend.security.config.RsaKeyProperties;
 import io.github.guzillo.fruitifystorebackend.security.config.SecurityConfig;
 import io.github.guzillo.fruitifystorebackend.security.service.CustomUserDetailsService;
 import java.math.BigDecimal;
@@ -33,6 +32,8 @@ import java.time.Instant;
 import java.util.List;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Pageable;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -65,7 +66,10 @@ class OrderControllerTest {
     private CustomUserDetailsService userDetailsService;
 
     @MockitoBean
-    private RsaKeyProperties rsaKeyProperties;
+    private RSAPublicKey jwtPublicKey;
+
+    @MockitoBean
+    private RSAPrivateKey jwtPrivateKey;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
