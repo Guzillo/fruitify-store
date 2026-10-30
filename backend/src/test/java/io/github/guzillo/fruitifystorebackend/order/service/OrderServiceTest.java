@@ -34,6 +34,7 @@ import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNo
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -122,6 +123,53 @@ class OrderServiceTest {
         assertThat(response.items().get(0).quantity()).isEqualTo(3);
         assertThat(product.getStockQuantity()).isEqualTo(7);
         verify(cartItemRepository).deleteByCartId(10L);
+    }
+
+    @Test
+    void shouldCancelUnpaidOrderAfterPaymentWindowAndRestoreStock() {
+        Order order = pendingOrderCreatedAt(Instant.now().minusSeconds(3 * 3600L));
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+        when(productRepository.findAllByIdInForUpdate(any())).thenReturn(List.of(product));
+
+        assertThat(orderService.cancelIfExpired(200L, Instant.now())).isTrue();
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(13);
+    }
+
+    @Test
+    void shouldLeavePaidOrderAloneWhenExpiryRuns() {
+        Order order = pendingOrderCreatedAt(Instant.now().minusSeconds(3 * 3600L));
+        order.setStatus(OrderStatus.PAID);
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+
+        assertThat(orderService.cancelIfExpired(200L, Instant.now())).isFalse();
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        verify(productRepository, never()).findAllByIdInForUpdate(any());
+    }
+
+    @Test
+    void shouldKeepRecentPendingOrderWhenExpiryRuns() {
+        Order order = pendingOrderCreatedAt(Instant.now().minusSeconds(60L));
+        when(orderRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(order));
+
+        assertThat(orderService.cancelIfExpired(200L, Instant.now())).isFalse();
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+    }
+
+    private Order pendingOrderCreatedAt(Instant createdAt) {
+        Order order = new Order();
+        setId(order, 200L);
+        order.setStatus(OrderStatus.PENDING);
+        order.setCreatedAt(createdAt);
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setQuantity(3);
+        order.getOrderItems().add(item);
+        return order;
     }
 
     @Test

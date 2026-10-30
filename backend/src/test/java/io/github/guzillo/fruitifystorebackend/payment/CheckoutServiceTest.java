@@ -21,6 +21,7 @@ import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
 import io.github.guzillo.fruitifystorebackend.payment.config.StripeProperties;
 import io.github.guzillo.fruitifystorebackend.payment.error.CheckoutSessionCreationException;
 import io.github.guzillo.fruitifystorebackend.payment.error.WebhookSignatureException;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderExpiredException;
 import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotPayableException;
 import io.github.guzillo.fruitifystorebackend.payment.service.PaymentService;
 import java.math.BigDecimal;
@@ -81,6 +82,23 @@ class CheckoutServiceTest {
         verify(stripeClient.v1().checkout().sessions()).create(paramsCaptor.capture());
         assertThat(paramsCaptor.getValue().getMetadata())
             .containsEntry("orderId", "123");
+        assertThat(paramsCaptor.getValue().getCancelUrl())
+            .isEqualTo("https://shop.example.com/orders/123?payment=cancelled");
+        assertThat(paramsCaptor.getValue().getExpiresAt())
+            .isGreaterThan(Instant.now().getEpochSecond() + 30 * 60L);
+    }
+
+    @Test
+    void shouldRejectCheckoutSessionForOrderTooCloseToItsDeadline() {
+        when(stripeProperties.domain()).thenReturn("https://shop.example.com");
+        when(orderService.findOrder("customer@example.com", 123L))
+            .thenReturn(orderCreatedAt(Instant.now().minusSeconds(115 * 60L)));
+
+        assertThatThrownBy(
+                () -> checkoutService.createCheckoutSession("customer@example.com", "123"))
+            .isInstanceOf(OrderExpiredException.class);
+
+        verify(stripeClient, never()).v1();
     }
 
     @Test
@@ -140,5 +158,17 @@ class CheckoutServiceTest {
             List.of(new OrderItemResponseDTO(
                 10L, "Apples", new BigDecimal("2.49"), 2)),
             Instant.now());
+    }
+
+    private OrderResponseDTO orderCreatedAt(Instant createdAt) {
+        return new OrderResponseDTO(
+            123L,
+            "123",
+            OrderStatus.PENDING,
+            new BigDecimal("24.98"),
+            null,
+            List.of(new OrderItemResponseDTO(
+                10L, "Apples", new BigDecimal("2.49"), 2)),
+            createdAt);
     }
 }

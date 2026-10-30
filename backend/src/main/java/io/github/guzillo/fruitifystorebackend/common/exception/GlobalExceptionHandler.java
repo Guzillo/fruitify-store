@@ -6,6 +6,7 @@ import io.github.guzillo.fruitifystorebackend.cart.exception.InsufficientStockEx
 import io.github.guzillo.fruitifystorebackend.cart.exception.ProductNotActiveException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryAlreadyExistsException;
 import io.github.guzillo.fruitifystorebackend.order.exception.EmptyCartException;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderExpiredException;
 import io.github.guzillo.fruitifystorebackend.order.exception.InvalidOrderStatusTransitionException;
 import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotPayableException;
 import io.github.guzillo.fruitifystorebackend.category.exception.CategoryInUseException;
@@ -71,6 +72,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(OrderNotPayableException.class)
     public ResponseEntity<Object> handleOrderNotPayableException(
         OrderNotPayableException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, ex.getMessage(),
+            new HttpHeaders(), HttpStatus.CONFLICT, request);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(OrderExpiredException.class)
+    public ResponseEntity<Object> handleOrderExpiredException(
+        OrderExpiredException ex, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(),
             new HttpHeaders(), HttpStatus.CONFLICT, request);
     }

@@ -26,6 +26,7 @@ import io.github.guzillo.fruitifystorebackend.user.exception.AuthenticatedUserNo
 import io.github.guzillo.fruitifystorebackend.user.model.User;
 import io.github.guzillo.fruitifystorebackend.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -77,6 +78,26 @@ public class OrderService {
         }
         order.setStatus(target);
         return orderMapper.toResponse(order);
+    }
+
+    /**
+     * Cancels a PENDING order whose payment window has passed and gives its stock back.
+     * Status is re-checked under the row lock, so an order paid a moment ago is left alone.
+     *
+     * @return true if the order was cancelled
+     */
+    @Transactional
+    public boolean cancelIfExpired(Long orderId, Instant now) {
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
+        if (order == null || order.getStatus() != OrderStatus.PENDING) {
+            return false;
+        }
+        if (order.getCreatedAt().plus(PaymentWindow.ORDER_TTL).isAfter(now)) {
+            return false;
+        }
+        restoreStock(order);
+        order.setStatus(OrderStatus.CANCELLED);
+        return true;
     }
 
     private void restoreStock(Order order) {

@@ -12,14 +12,17 @@ import com.stripe.param.checkout.SessionCreateParams.LineItem.PriceData;
 import com.stripe.param.checkout.SessionCreateParams.Mode;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderItemResponseDTO;
 import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
+import io.github.guzillo.fruitifystorebackend.order.exception.OrderExpiredException;
 import io.github.guzillo.fruitifystorebackend.order.exception.OrderNotPayableException;
 import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
 import io.github.guzillo.fruitifystorebackend.order.service.OrderService;
+import io.github.guzillo.fruitifystorebackend.order.service.PaymentWindow;
 import io.github.guzillo.fruitifystorebackend.payment.config.StripeProperties;
 import io.github.guzillo.fruitifystorebackend.payment.error.CheckoutSessionCreationException;
 import io.github.guzillo.fruitifystorebackend.payment.error.WebhookSignatureException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +42,22 @@ public class PaymentService {
     public Session createCheckoutSession(String email, String orderId) {
         String domain = stripeProperties.domain();
         String successUrl = domain + "/checkout?success=true";
+        String cancelUrl = domain + "/orders/" + orderId + "?payment=cancelled";
 
         OrderResponseDTO order = orderService.findOrder(email, Long.valueOf(orderId));
         if (order.status() != OrderStatus.PENDING) {
             throw new OrderNotPayableException(order.id(), order.status());
         }
+
+        // The session must expire before the order is cancelled, so a payment can never
+        // arrive for an order whose stock was already released.
+        Instant now = Instant.now();
+        Instant sessionExpiresAt = now.plus(PaymentWindow.SESSION_LIFETIME);
+        Instant orderDeadline = order.createdAt().plus(PaymentWindow.ORDER_TTL);
+        if (sessionExpiresAt.plus(PaymentWindow.SAFETY_MARGIN).isAfter(orderDeadline)) {
+            throw new OrderExpiredException(order.id());
+        }
+
         List<OrderItemResponseDTO> orderItems = order.items();
         List<LineItem> lineItems = toLineItems(orderItems);
 
@@ -51,6 +65,8 @@ public class PaymentService {
             SessionCreateParams.builder()
                 .setMode(Mode.PAYMENT)
                 .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .setExpiresAt(sessionExpiresAt.getEpochSecond())
                 .putMetadata("orderId", order.id().toString())
                 .addAllLineItem(lineItems)
                 .build();

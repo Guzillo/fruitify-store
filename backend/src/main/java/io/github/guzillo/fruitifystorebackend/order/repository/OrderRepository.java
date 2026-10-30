@@ -1,7 +1,10 @@
 package io.github.guzillo.fruitifystorebackend.order.repository;
 
 import io.github.guzillo.fruitifystorebackend.order.model.Order;
+import io.github.guzillo.fruitifystorebackend.order.model.OrderStatus;
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
+import java.util.List;
 import org.jspecify.annotations.NullMarked;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -26,4 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("select o.id from Order o where o.status = :status and o.createdAt <= :createdBefore")
+    List<Long> findIdsByStatusAndCreatedAtBefore(@Param("status") OrderStatus status,
+        @Param("createdBefore") Instant createdBefore);
 }
