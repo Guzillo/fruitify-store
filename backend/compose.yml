@@ -24,9 +24,7 @@ services:
       - path: ../.env
         required: false
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: mysecretpassword
+      DATABASE_URL: jdbc:postgresql://db:5432/postgres?user=postgres&password=mysecretpassword
     ports:
       - "8080:8080"
     depends_on:

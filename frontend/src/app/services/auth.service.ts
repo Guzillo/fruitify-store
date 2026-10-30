@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { API_URL } from '../config/app-config';
 import {
   AuthenticationResponse,
   SignupRequest,
@@ -9,7 +10,6 @@ import {
   UserProfile,
 } from '../models/auth.model';
 
-const API_URL = 'http://localhost:8080/api';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 

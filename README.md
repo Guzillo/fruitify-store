@@ -103,6 +103,14 @@ npm start
 ```
 * **Web App**: `http://localhost:4200`
 
+The frontend reads the backend URL from the `API_URL` environment variable at **runtime** (through
+`env.js`), defaulting to `http://localhost:8080`. For local development `npm start` regenerates
+`public/env.js` from your shell environment:
+
+```bash
+API_URL=https://api.example.com npm start
+```
+
 ### Demo Credentials (`dev` profile)
 | Role | Email | Password | Permissions |
 |---|---|---|---|

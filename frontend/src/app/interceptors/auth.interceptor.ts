@@ -1,17 +1,18 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { API_URL } from '../config/app-config';
 import { AuthService } from '../services/auth.service';
 
-const API_URL = 'http://localhost:8080/api/';
+const API_PATH = `${API_URL}/`;
 
 // Adds "Authorization: Bearer <jwt>" to every API call. If the server answers 401
 // (the access token expired), it refreshes the token once and retries the request.
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
 
-  const isAuthEndpoint = req.url.startsWith(`${API_URL}auth/`);
-  if (!req.url.startsWith(API_URL) || isAuthEndpoint || req.headers.has('Authorization')) {
+  const isAuthEndpoint = req.url.startsWith(`${API_PATH}auth/`);
+  if (!req.url.startsWith(API_PATH) || isAuthEndpoint || req.headers.has('Authorization')) {
     return next(req);
   }
 

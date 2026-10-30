@@ -1,12 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API_URL } from '../config/app-config';
 import { Product, ProductPage, ProductWriteRequest } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/products';
+  private readonly apiUrl = `${API_URL}/products`;
 
   getProducts(page = 0, size = 12, categoryId?: number): Observable<ProductPage> {
     let params = new HttpParams()
