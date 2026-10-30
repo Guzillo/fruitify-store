@@ -2,7 +2,7 @@
   <a routerLink="/orders" class="back">← Back to my orders</a>
 
   @if (loading()) {
-    <p class="status">Loading order…</p>
+    <app-loading-state [compact]="true" message="Loading your order…" />
   } @else if (error(); as message) {
     <p class="error">{{ message }}</p>
   } @else if (order(); as order) {

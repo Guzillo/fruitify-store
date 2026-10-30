@@ -17,7 +17,7 @@
   }
 
   @if (loading()) {
-    <p class="status">Loading orders…</p>
+    <app-loading-state [compact]="true" message="Gathering your orders…" />
   } @else if (error(); as message) {
     <p class="error">{{ message }}</p>
   } @else if (orders().length === 0) {

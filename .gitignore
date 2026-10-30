@@ -34,3 +34,4 @@ build/
 
 backend/src/main/resources/certs/
 .env
+/.env.prod

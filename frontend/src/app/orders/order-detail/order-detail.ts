@@ -7,10 +7,11 @@ import { EMPTY, catchError, map, switchMap, tap } from 'rxjs';
 import { Order } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
 import { PaymentService } from '../../services/payment.service';
+import { LoadingState } from '../../shared/loading-state/loading-state';
 
 @Component({
   selector: 'app-order-detail',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, RouterLink, LoadingState],
   templateUrl: './order-detail.html',
   styleUrl: '../orders.css',
 })

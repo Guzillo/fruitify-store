@@ -5,12 +5,13 @@ import { RouterLink } from '@angular/router';
 import { AdminOrderSummary, OrderSummary } from '../models/order.model';
 import { AuthService } from '../services/auth.service';
 import { OrderService } from '../services/order.service';
+import { LoadingState } from '../shared/loading-state/loading-state';
 
 type Scope = 'mine' | 'all';
 
 @Component({
   selector: 'app-orders',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, RouterLink, LoadingState],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })

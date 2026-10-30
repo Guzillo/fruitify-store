@@ -4,10 +4,11 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Cart, CartItem } from '../../models/cart.model';
 import { CartService } from '../../services/cart.service';
+import { LoadingState } from '../../shared/loading-state/loading-state';
 
 @Component({
   selector: 'app-cart-page',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, LoadingState],
   templateUrl: './cart-page.html',
   styleUrl: './cart-page.css',
 })

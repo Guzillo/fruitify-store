@@ -2,7 +2,7 @@
   <a routerLink="/" class="back">← Back to products</a>
 
   @if (loading()) {
-    <p class="status">Loading product…</p>
+    <app-loading-state [compact]="true" message="Fetching this fruit…" />
   } @else if (error(); as message) {
     <p class="error">{{ message }}</p>
   } @else if (product(); as product) {

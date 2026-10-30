@@ -7,10 +7,11 @@ import { ProductForm } from '../product/product-form/product-form';
 import { AuthService } from '../services/auth.service';
 import { CategoryService } from '../services/category.service';
 import { ProductService } from '../services/product.service';
+import { LoadingState } from '../shared/loading-state/loading-state';
 
 @Component({
   selector: 'app-home',
-  imports: [CurrencyPipe, RouterLink, AddToCart, ProductForm],
+  imports: [CurrencyPipe, RouterLink, AddToCart, ProductForm, LoadingState],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

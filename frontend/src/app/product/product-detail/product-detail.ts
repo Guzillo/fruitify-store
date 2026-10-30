@@ -9,10 +9,11 @@ import { Product } from '../../models/product.model';
 import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
 import { ProductForm } from '../product-form/product-form';
+import { LoadingState } from '../../shared/loading-state/loading-state';
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CurrencyPipe, RouterLink, AddToCart, ProductForm],
+  imports: [CurrencyPipe, RouterLink, AddToCart, ProductForm, LoadingState],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css',
 })

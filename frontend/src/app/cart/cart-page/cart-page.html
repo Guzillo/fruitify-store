@@ -2,7 +2,7 @@
   <h1>My cart</h1>
 
   @if (loading()) {
-    <p class="status">Loading cart…</p>
+    <app-loading-state [compact]="true" message="Loading your basket…" />
   } @else if (cart(); as current) {
     @if (current.items.length === 0) {
       <p class="status">Your cart is empty. <a routerLink="/">Browse products</a>.</p>

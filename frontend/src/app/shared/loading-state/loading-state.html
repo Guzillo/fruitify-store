@@ -1,0 +1,19 @@
+<div class="loader" role="status" [class.compact]="compact()">
+  <div class="loader-visual" aria-hidden="true">
+    <span class="orbit">
+      <span class="dot dot-berry"></span>
+      <span class="dot dot-lemon"></span>
+      <span class="dot dot-grape"></span>
+    </span>
+    <span class="core">🍏</span>
+  </div>
+
+  <p class="loader-message">{{ message() }}</p>
+
+  @if (hint()) {
+    <p class="loader-hint">{{ hint() }}</p>
+  }
+
+  <p class="loader-timer" aria-hidden="true">Waiting {{ elapsedLabel() }}</p>
+  <div class="loader-bar" aria-hidden="true"><span></span></div>
+</div>
