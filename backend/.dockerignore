@@ -1,0 +1,10 @@
+target/
+.idea/
+.mvn/
+mvnw
+mvnw.cmd
+HELP.md
+compose.yml
+*.iml
+.git/
+.gitignore
