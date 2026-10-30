@@ -82,11 +82,27 @@ class ProductServiceTest {
             .thenReturn(new PageImpl<>(List.of(product)));
         when(productMapper.toResponse(product)).thenReturn(response);
 
-        Page<ProductResponseDTO> result = productService.findProducts(pageable, false);
+        Page<ProductResponseDTO> result = productService.findProducts(pageable, null, false);
 
         assertThat(result.getContent()).containsExactly(response);
         verify(productRepository).findAllByIsActiveTrue(pageable);
         verify(productMapper).toResponse(product);
+    }
+
+    @Test
+    void shouldReturnPagedProductsFilteredByCategory() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Product product = new Product();
+        ProductResponseDTO response = productResponse(1L, "Orange");
+
+        when(productRepository.findAllByCategoryIdAndIsActiveTrue(1L, pageable))
+            .thenReturn(new PageImpl<>(List.of(product)));
+        when(productMapper.toResponse(product)).thenReturn(response);
+
+        Page<ProductResponseDTO> result = productService.findProducts(pageable, 1L, false);
+
+        assertThat(result.getContent()).containsExactly(response);
+        verify(productRepository).findAllByCategoryIdAndIsActiveTrue(1L, pageable);
     }
 
     @Test

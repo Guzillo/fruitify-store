@@ -69,6 +69,7 @@ class ProductControllerTest {
         Page<ProductResponseDTO> response = new PageImpl<>(List.of(product));
         when(productService.findProducts(
             org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.isNull(),
             org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(response);
 
@@ -89,6 +90,7 @@ class ProductControllerTest {
                     && pageable.getPageSize() == 10
                     && Objects.requireNonNull(
                         pageable.getSort().getOrderFor("price")).isDescending()),
+            org.mockito.ArgumentMatchers.isNull(),
             org.mockito.ArgumentMatchers.eq(false));
     }
 
@@ -96,6 +98,7 @@ class ProductControllerTest {
     void shouldListProductsSortedByNameWithPageSizeTwentyByDefault() throws Exception {
         when(productService.findProducts(
             org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.isNull(),
             org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(new PageImpl<>(List.of()));
 
@@ -109,6 +112,25 @@ class ProductControllerTest {
                     && pageable.getPageSize() == 20
                     && pageable.getSort().getOrderFor("name") != null
                     && pageable.getSort().getOrderFor("name").isAscending()),
+            org.mockito.ArgumentMatchers.isNull(),
+            org.mockito.ArgumentMatchers.eq(false));
+    }
+
+    @Test
+    void shouldFilterProductsByCategory() throws Exception {
+        when(productService.findProducts(
+            org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.eq(2L),
+            org.mockito.ArgumentMatchers.eq(false)))
+            .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc.perform(get("/api/products").queryParam("categoryId", "2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isEmpty());
+
+        verify(productService).findProducts(
+            org.mockito.ArgumentMatchers.any(Pageable.class),
+            org.mockito.ArgumentMatchers.eq(2L),
             org.mockito.ArgumentMatchers.eq(false));
     }
 

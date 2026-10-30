@@ -34,6 +34,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @NullMarked
     Page<Product> findAllByIsActiveTrue(Pageable pageable);
 
+    @EntityGraph(attributePaths = "category")
+    Page<Product> findAllByCategoryId(Long categoryId, Pageable pageable);
+
+    @EntityGraph(attributePaths = "category")
+    Page<Product> findAllByCategoryIdAndIsActiveTrue(Long categoryId, Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id in :ids order by p.id")
     List<Product> findAllByIdInForUpdate(@Param("ids") Collection<Long> ids);

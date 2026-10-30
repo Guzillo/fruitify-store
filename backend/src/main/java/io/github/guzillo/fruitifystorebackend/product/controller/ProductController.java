@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -44,15 +45,18 @@ public class ProductController {
     private final ProductService productService;
 
     @Operation(summary = "List products",
-        description = "Paginated product list. Inactive products are returned only to ADMIN users. "
+        description = "Paginated product list, optionally filtered by categoryId. "
+            + "Inactive products are returned only to ADMIN users. "
             + "Allowed sort properties: id, name, price, stockQuantity.")
     @GetMapping
     public ProductPageResponseDTO getProducts(
         @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC)
-        Pageable pageable, Authentication authentication) {
+        Pageable pageable,
+        @RequestParam(required = false) Long categoryId,
+        Authentication authentication) {
         PageableSortValidator.validate(pageable, SORTABLE_PROPERTIES);
         Page<ProductResponseDTO> products = productService.findProducts(
-            pageable, isAdmin(authentication));
+            pageable, categoryId, isAdmin(authentication));
         return new ProductPageResponseDTO(
             products.getContent(),
             products.getNumber(),

@@ -26,10 +26,18 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponseDTO> findProducts(Pageable pageable, boolean includeInactive) {
-        Page<Product> products = includeInactive
-            ? productRepository.findAll(pageable)
-            : productRepository.findAllByIsActiveTrue(pageable);
+    public Page<ProductResponseDTO> findProducts(Pageable pageable, Long categoryId,
+        boolean includeInactive) {
+        Page<Product> products;
+        if (categoryId == null) {
+            products = includeInactive
+                ? productRepository.findAll(pageable)
+                : productRepository.findAllByIsActiveTrue(pageable);
+        } else {
+            products = includeInactive
+                ? productRepository.findAllByCategoryId(categoryId, pageable)
+                : productRepository.findAllByCategoryIdAndIsActiveTrue(categoryId, pageable);
+        }
         return products
             .map(productMapper::toResponse);
     }
