@@ -33,6 +33,7 @@ public class ProductMapper {
             new CategoryResponseDTO(
                 product.getCategory().getId(),
                 product.getCategory().getName(),
-                product.getCategory().getSlug()));
+                product.getCategory().getSlug()),
+            product.getIsActive());
     }
 }

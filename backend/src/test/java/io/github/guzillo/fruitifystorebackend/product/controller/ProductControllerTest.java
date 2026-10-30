@@ -65,7 +65,7 @@ class ProductControllerTest {
             new BigDecimal("199.99"),
             12,
             "https://example.test/shoes.png",
-            new CategoryResponseDTO(1L, "Obuwie", "obuwie"));
+            new CategoryResponseDTO(1L, "Obuwie", "obuwie"), true);
         Page<ProductResponseDTO> response = new PageImpl<>(List.of(product));
         when(productService.findProducts(
             org.mockito.ArgumentMatchers.any(Pageable.class),
@@ -151,7 +151,7 @@ class ProductControllerTest {
             new BigDecimal("2.49"),
             25,
             "https://example.test/orange.png",
-            new CategoryResponseDTO(1L, "Fruits", "fruits"));
+            new CategoryResponseDTO(1L, "Fruits", "fruits"), true);
         when(productService.findProduct(1L, false)).thenReturn(product);
 
         mockMvc.perform(get("/api/products/1"))
@@ -174,7 +174,7 @@ class ProductControllerTest {
         ProductResponseDTO response = new ProductResponseDTO(
             2L, "Apple", "Fresh apple", new BigDecimal("2.49"), 10,
             "https://example.test/apple.png",
-            new CategoryResponseDTO(1L, "Fruits", "fruits"));
+            new CategoryResponseDTO(1L, "Fruits", "fruits"), true);
         when(productService.createProduct(
             org.mockito.ArgumentMatchers.any(ProductCreateRequestDTO.class)))
             .thenReturn(response);
@@ -223,7 +223,7 @@ class ProductControllerTest {
     void shouldUpdateProduct() throws Exception {
         ProductResponseDTO response = new ProductResponseDTO(
             1L, "Apple", "Updated apple", new BigDecimal("3.49"), 50,
-            null, new CategoryResponseDTO(1L, "Fruits", "fruits"));
+            null, new CategoryResponseDTO(1L, "Fruits", "fruits"), true);
         when(productService.updateProduct(
             org.mockito.ArgumentMatchers.eq(1L),
             org.mockito.ArgumentMatchers.any(ProductUpdateRequestDTO.class)))

@@ -257,6 +257,6 @@ class ProductServiceTest {
             new BigDecimal("2.49"),
             25,
             "https://example.test/" + name.toLowerCase() + ".png",
-            new CategoryResponseDTO(1L, "Fruits", "fruits"));
+            new CategoryResponseDTO(1L, "Fruits", "fruits"), true);
     }
 }
