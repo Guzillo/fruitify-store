@@ -48,13 +48,21 @@
     <div class="summary">
       <p class="total">Total: <strong>{{ order.totalAmount | currency: 'PLN' }}</strong></p>
       @if (order.status === 'PENDING') {
-        <button type="button" (click)="pay(order)" [disabled]="paying()">
-          {{ paying() ? 'Redirecting to payment…' : 'Pay now' }}
-        </button>
+        <div class="actions">
+          <button type="button" class="secondary" (click)="cancelOrder(order)" [disabled]="cancelling()">
+            {{ cancelling() ? 'Cancelling…' : 'Cancel order' }}
+          </button>
+          <button type="button" (click)="pay(order)" [disabled]="paying() || cancelling()">
+            {{ paying() ? 'Redirecting to payment…' : 'Pay now' }}
+          </button>
+        </div>
       }
     </div>
 
     @if (payError(); as message) {
+      <p class="error">{{ message }}</p>
+    }
+    @if (cancelError(); as message) {
       <p class="error">{{ message }}</p>
     }
   }

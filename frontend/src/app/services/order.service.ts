@@ -25,4 +25,9 @@ export class OrderService {
   getOrder(id: number): Observable<Order> {
     return this.http.get<Order>(`${API_URL}/${id}`);
   }
+
+  // Only unpaid orders can be cancelled; the server closes the Stripe session and releases stock.
+  cancelOrder(id: number): Observable<Order> {
+    return this.http.post<Order>(`${API_URL}/${id}/cancel`, null);
+  }
 }

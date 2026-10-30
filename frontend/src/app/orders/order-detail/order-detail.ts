@@ -56,6 +56,31 @@ export class OrderDetail implements OnInit {
     });
   }
 
+  protected readonly cancelling = signal(false);
+  protected readonly cancelError = signal<string | null>(null);
+
+  protected cancelOrder(order: Order): void {
+    if (!window.confirm('Cancel this order? Its items will be released.')) {
+      return;
+    }
+
+    this.cancelling.set(true);
+    this.cancelError.set(null);
+
+    this.orderService.cancelOrder(order.id).subscribe({
+      next: (updated) => {
+        this.order.set(updated);
+        this.cancelling.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cancelError.set(err.status === 409
+          ? 'This order can no longer be cancelled. If you have just paid, it will be marked as paid shortly.'
+          : 'Could not cancel the order. Please try again.');
+        this.cancelling.set(false);
+      },
+    });
+  }
+
   // Starts a Stripe session for an existing PENDING order (e.g. after a cancelled payment).
   protected pay(order: Order): void {
     this.paying.set(true);
