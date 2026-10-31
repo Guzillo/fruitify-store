@@ -4,6 +4,7 @@ import io.github.guzillo.fruitifystorebackend.cart.model.CartItem;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
@@ -13,5 +14,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     List<CartItem> findByCartId(Long cartId);
 
+    @Transactional
     void deleteByCartId(Long cartId);
 }

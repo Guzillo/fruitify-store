@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RefreshTokenService {
@@ -22,6 +23,7 @@ public class RefreshTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    @Transactional
     public String generateRefreshToken(final String username) {
         final User user = userRepository.findByEmail(username).orElseThrow();
         final String newToken = UUID.randomUUID().toString();
@@ -33,6 +35,7 @@ public class RefreshTokenService {
         return newToken;
     }
 
+    @Transactional(readOnly = true)
     public String validateRefreshTokenAndGetUsername(final String givenToken) {
         final RefreshToken refreshToken = refreshTokenRepository.findByTokenAndExpirationTimeAfter(givenToken, OffsetDateTime.now());
         if (refreshToken == null) {
@@ -41,6 +44,7 @@ public class RefreshTokenService {
         return refreshToken.getUser().getEmail();
     }
 
+    @Transactional
     public void revokeRefreshToken(final String token) {
         refreshTokenRepository.deleteByToken(token);
     }
