@@ -60,8 +60,8 @@ public class PaymentService {
 
         // Close the previous attempt so it cannot be paid after this one (or after a cancel).
         String previousSessionId = orderService.findCheckoutSessionId(order.id());
-        if (previousSessionId != null && !closeCheckoutSession(previousSessionId)) {
-            throw new OrderNotPayableException(order.id(), order.status());
+        if (previousSessionId != null && !closeCheckoutSession(order.id(), previousSessionId)) {
+            throw new OrderNotPayableException(order.id(), OrderStatus.PAID);
         }
 
         List<OrderItemResponseDTO> orderItems = order.items();
@@ -88,13 +88,19 @@ public class PaymentService {
 
     /**
      * Makes sure a Stripe session can no longer be paid.
+     * If the session is already paid (complete), the order status is self-healed to PAID.
      *
      * @return false if the session was already paid, true if it is now closed
      */
-    public boolean closeCheckoutSession(String sessionId) {
+    public boolean closeCheckoutSession(Long orderId, String sessionId) {
         try {
             Session session = stripeClient.v1().checkout().sessions().retrieve(sessionId);
             if ("complete".equals(session.getStatus())) {
+                if (orderId != null) {
+                    orderService.changeStatus(orderId, OrderStatus.PAID);
+                    log.info("Self-healed order {} status to PAID after detecting completed Stripe session {}",
+                        orderId, sessionId);
+                }
                 return false;
             }
             if ("open".equals(session.getStatus())) {
@@ -105,6 +111,30 @@ public class PaymentService {
             log.error("Could not close Stripe session {}: {}", sessionId, e.getMessage());
             throw new CheckoutSessionCreationException();
         }
+    }
+
+    public boolean closeCheckoutSession(String sessionId) {
+        return closeCheckoutSession(null, sessionId);
+    }
+
+    public OrderResponseDTO syncPaymentStatus(String email, Long orderId) {
+        OrderResponseDTO order = orderService.findOrder(email, orderId);
+        if (order.status() != OrderStatus.PENDING) {
+            return order;
+        }
+        String sessionId = orderService.findCheckoutSessionId(orderId);
+        if (sessionId != null) {
+            try {
+                Session session = stripeClient.v1().checkout().sessions().retrieve(sessionId);
+                if ("complete".equals(session.getStatus())) {
+                    log.info("Self-healed order {} status to PAID from Stripe session {}", orderId, sessionId);
+                    return orderService.changeStatus(orderId, OrderStatus.PAID);
+                }
+            } catch (StripeException e) {
+                log.warn("Could not retrieve Stripe session {} while syncing: {}", sessionId, e.getMessage());
+            }
+        }
+        return order;
     }
 
     public void handleWebhookStripe(String payload, String sigHeader) {

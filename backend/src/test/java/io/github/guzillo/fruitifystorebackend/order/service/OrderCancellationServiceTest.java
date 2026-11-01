@@ -52,13 +52,13 @@ class OrderCancellationServiceTest {
     void shouldCloseOpenStripeSessionBeforeCancelling() {
         when(orderService.findOrder(EMAIL, 1L)).thenReturn(order(OrderStatus.PENDING));
         when(orderService.findCheckoutSessionId(1L)).thenReturn("cs_open");
-        when(paymentService.closeCheckoutSession("cs_open")).thenReturn(true);
+        when(paymentService.closeCheckoutSession(1L, "cs_open")).thenReturn(true);
         when(orderService.cancelPendingOrder(1L)).thenReturn(order(OrderStatus.CANCELLED));
 
         cancellationService.cancel(EMAIL, 1L);
 
         InOrder order = inOrder(paymentService, orderService);
-        order.verify(paymentService).closeCheckoutSession("cs_open");
+        order.verify(paymentService).closeCheckoutSession(1L, "cs_open");
         order.verify(orderService).cancelPendingOrder(1L);
     }
 
@@ -66,7 +66,7 @@ class OrderCancellationServiceTest {
     void shouldRefuseToCancelWhenStripeSessionAlreadyPaid() {
         when(orderService.findOrder(EMAIL, 1L)).thenReturn(order(OrderStatus.PENDING));
         when(orderService.findCheckoutSessionId(1L)).thenReturn("cs_paid");
-        when(paymentService.closeCheckoutSession("cs_paid")).thenReturn(false);
+        when(paymentService.closeCheckoutSession(1L, "cs_paid")).thenReturn(false);
 
         assertThatThrownBy(() -> cancellationService.cancel(EMAIL, 1L))
             .isInstanceOf(OrderNotCancellableException.class);

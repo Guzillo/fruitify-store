@@ -1,6 +1,7 @@
 package io.github.guzillo.fruitifystorebackend.payment.controller;
 
 import com.stripe.model.checkout.Session;
+import io.github.guzillo.fruitifystorebackend.order.dto.OrderResponseDTO;
 import io.github.guzillo.fruitifystorebackend.payment.dto.CheckoutSessionResponseDTO;
 import io.github.guzillo.fruitifystorebackend.payment.dto.CreateCheckoutSessionDTO;
 import io.github.guzillo.fruitifystorebackend.payment.service.PaymentService;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -41,6 +43,17 @@ public class PaymentController {
             checkoutSession.getUrl(),
             checkoutSession.getId()
         );
+    }
+
+    @Operation(summary = "Sync payment status with Stripe",
+        description = "Checks Stripe for the order's session status and updates it to PAID if completed.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Order with current status")
+    @ApiResponse(responseCode = "404", description = "Order not found")
+    @PostMapping("/{orderId}/sync")
+    public OrderResponseDTO syncPaymentStatus(Authentication authentication,
+        @PathVariable Long orderId) {
+        return paymentService.syncPaymentStatus(authentication.getName(), orderId);
     }
 
     @Operation(summary = "Stripe webhook",

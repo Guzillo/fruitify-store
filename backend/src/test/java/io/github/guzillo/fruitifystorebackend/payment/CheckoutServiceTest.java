@@ -161,6 +161,34 @@ class CheckoutServiceTest {
     }
 
     @Test
+    void shouldSelfHealOrderToPaidWhenClosingPaidSessionWithOrderId() throws StripeException {
+        stubStripeSessionService();
+        when(stripeSessionService.retrieve("cs_paid")).thenReturn(stripeSession);
+        when(stripeSession.getStatus()).thenReturn("complete");
+
+        assertThat(checkoutService.closeCheckoutSession(123L, "cs_paid")).isFalse();
+
+        verify(orderService).changeStatus(123L, OrderStatus.PAID);
+        verify(stripeSessionService, never()).expire(any());
+    }
+
+    @Test
+    void shouldSyncPaymentStatusWhenSessionComplete() throws StripeException {
+        when(orderService.findOrder("customer@example.com", 123L)).thenReturn(order());
+        when(orderService.findCheckoutSessionId(123L)).thenReturn("cs_paid");
+        stubStripeSessionService();
+        when(stripeSessionService.retrieve("cs_paid")).thenReturn(stripeSession);
+        when(stripeSession.getStatus()).thenReturn("complete");
+        when(orderService.changeStatus(123L, OrderStatus.PAID))
+            .thenReturn(orderWithStatus(OrderStatus.PAID));
+
+        OrderResponseDTO result = checkoutService.syncPaymentStatus("customer@example.com", 123L);
+
+        assertThat(result.status()).isEqualTo(OrderStatus.PAID);
+        verify(orderService).changeStatus(123L, OrderStatus.PAID);
+    }
+
+    @Test
     void shouldStoreStripeSessionIdOnOrder() throws StripeException {
         when(stripeProperties.domain()).thenReturn("https://shop.example.com");
         when(orderService.findOrder("customer@example.com", 123L)).thenReturn(order());

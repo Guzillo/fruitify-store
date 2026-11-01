@@ -29,7 +29,7 @@ public class OrderCancellationService {
         }
 
         String sessionId = orderService.findCheckoutSessionId(orderId);
-        if (sessionId != null && !paymentService.closeCheckoutSession(sessionId)) {
+        if (sessionId != null && !paymentService.closeCheckoutSession(orderId, sessionId)) {
             throw new OrderNotCancellableException(orderId, "a payment has already been made");
         }
 

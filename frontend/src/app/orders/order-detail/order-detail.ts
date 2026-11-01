@@ -59,6 +59,23 @@ export class OrderDetail implements OnInit {
 
   protected readonly cancelling = signal(false);
   protected readonly cancelError = signal<string | null>(null);
+  protected readonly syncing = signal(false);
+
+  protected syncStatus(order: Order): void {
+    this.syncing.set(true);
+    this.payError.set(null);
+    this.cancelError.set(null);
+
+    this.paymentService.syncPaymentStatus(order.id).subscribe({
+      next: (updated) => {
+        this.order.set(updated);
+        this.syncing.set(false);
+      },
+      error: () => {
+        this.syncing.set(false);
+      },
+    });
+  }
 
   protected cancelOrder(order: Order): void {
     if (!window.confirm('Cancel this order? Its items will be released.')) {
@@ -74,10 +91,24 @@ export class OrderDetail implements OnInit {
         this.cancelling.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.cancelError.set(err.status === 409
-          ? 'This order can no longer be cancelled. If you have just paid, it will be marked as paid shortly.'
-          : 'Could not cancel the order. Please try again.');
         this.cancelling.set(false);
+        this.orderService.getOrder(order.id).subscribe({
+          next: (freshOrder) => {
+            this.order.set(freshOrder);
+            if (freshOrder.status === 'PAID') {
+              this.cancelError.set('This order has already been paid and cannot be cancelled.');
+            } else {
+              this.cancelError.set(err.status === 409
+                ? 'This order can no longer be cancelled. If you have just paid, it will be marked as paid shortly.'
+                : 'Could not cancel the order. Please try again.');
+            }
+          },
+          error: () => {
+            this.cancelError.set(err.status === 409
+              ? 'This order can no longer be cancelled. If you have just paid, it will be marked as paid shortly.'
+              : 'Could not cancel the order. Please try again.');
+          },
+        });
       },
     });
   }
@@ -92,11 +123,26 @@ export class OrderDetail implements OnInit {
         window.location.href = session.url;
       },
       error: (err: HttpErrorResponse) => {
-        this.payError.set(err.status === 409
-          ? 'This order has expired and its items were released. '
-            + 'Please add the products to your cart and check out again.'
-          : 'Could not start the payment. Please try again.');
         this.paying.set(false);
+        this.orderService.getOrder(order.id).subscribe({
+          next: (freshOrder) => {
+            this.order.set(freshOrder);
+            if (freshOrder.status === 'PAID') {
+              this.payError.set(null);
+            } else if (freshOrder.status === 'CANCELLED') {
+              this.payError.set('This order has been cancelled and its items were released.');
+            } else {
+              this.payError.set(err.status === 409
+                ? 'This order has expired and its items were released. Please add the products to your cart and check out again.'
+                : 'Could not start the payment. Please try again.');
+            }
+          },
+          error: () => {
+            this.payError.set(err.status === 409
+              ? 'This order has expired and its items were released. Please add the products to your cart and check out again.'
+              : 'Could not start the payment. Please try again.');
+          },
+        });
       },
     });
   }

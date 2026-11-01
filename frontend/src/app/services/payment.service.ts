@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/app-config';
-import { CheckoutSession } from '../models/order.model';
+import { CheckoutSession, Order } from '../models/order.model';
 
 const PAYMENTS_API_URL = `${API_URL}/payments`;
 
@@ -15,5 +15,9 @@ export class PaymentService {
     return this.http.post<CheckoutSession>(`${PAYMENTS_API_URL}/create-checkout-session`, {
       orderNumber: String(orderId),
     });
+  }
+
+  syncPaymentStatus(orderId: number): Observable<Order> {
+    return this.http.post<Order>(`${PAYMENTS_API_URL}/${orderId}/sync`, {});
   }
 }
