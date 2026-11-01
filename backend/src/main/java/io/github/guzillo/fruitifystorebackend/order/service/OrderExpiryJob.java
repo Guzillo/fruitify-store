@@ -6,6 +6,8 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,13 @@ public class OrderExpiryJob {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
 
-    @Scheduled(fixedDelayString = "PT1M")
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStartup() {
+        log.info("Running initial check for expired unpaid orders on application startup...");
+        cancelExpiredOrders();
+    }
+
+    @Scheduled(fixedDelayString = "${app.scheduling.order-expiry.delay:PT1H}")
     public void cancelExpiredOrders() {
         Instant now = Instant.now();
         List<Long> candidates = orderRepository.findIdsByStatusAndCreatedAtBefore(
