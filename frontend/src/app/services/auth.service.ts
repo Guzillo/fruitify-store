@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, shareReplay, tap } from 'rxjs';
 import { API_URL } from '../config/app-config';
 import {
   AuthenticationResponse,
@@ -21,6 +21,7 @@ export class AuthService {
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
   // Only drives which controls are shown; the server checks the role on every admin call.
   readonly isAdmin = signal(hasAdminRole(localStorage.getItem(ACCESS_TOKEN_KEY)));
+  private refreshRequest$: Observable<AuthenticationResponse> | null = null;
 
   signup(request: SignupRequest): Observable<void> {
     return this.http.post<void>(`${API_URL}/auth/signup`, request);
@@ -35,10 +36,19 @@ export class AuthService {
   }
 
   refresh(): Observable<AuthenticationResponse> {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY) ?? '';
-    return this.http
-      .post<AuthenticationResponse>(`${API_URL}/auth/refresh`, { refreshToken })
-      .pipe(tap((tokens) => this.storeTokens(tokens)));
+    if (!this.refreshRequest$) {
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY) ?? '';
+      this.refreshRequest$ = this.http
+        .post<AuthenticationResponse>(`${API_URL}/auth/refresh`, { refreshToken })
+        .pipe(
+          tap((tokens) => this.storeTokens(tokens)),
+          finalize(() => {
+            this.refreshRequest$ = null;
+          }),
+          shareReplay({ bufferSize: 1, refCount: false }),
+        );
+    }
+    return this.refreshRequest$;
   }
 
   loadCurrentUser(): Observable<UserProfile> {
